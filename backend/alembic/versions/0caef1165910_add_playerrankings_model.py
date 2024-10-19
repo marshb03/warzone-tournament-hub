@@ -1,8 +1,8 @@
-"""Add cascade delete to tournaments
+"""Add PlayerRankings model
 
-Revision ID: 8357ee2bea77
-Revises: 18dc0aea0331
-Create Date: 2024-10-09 20:24:31.548347
+Revision ID: 0caef1165910
+Revises: 4d1966d6d982
+Create Date: 2024-10-19 09:00:39.535479
 
 """
 from typing import Sequence, Union
@@ -12,8 +12,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '8357ee2bea77'
-down_revision: Union[str, None] = '18dc0aea0331'
+revision: str = '0caef1165910'
+down_revision: Union[str, None] = '4d1966d6d982'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

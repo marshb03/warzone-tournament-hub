@@ -1,8 +1,8 @@
-"""Add LeaderboardEntry model
+"""Add PlayerRanking model
 
-Revision ID: 18dc0aea0331
-Revises: 5160e64b948f
-Create Date: 2024-10-09 17:28:22.772066
+Revision ID: 4d1966d6d982
+Revises: 6b159c38a16a
+Create Date: 2024-10-19 08:45:19.120319
 
 """
 from typing import Sequence, Union
@@ -12,8 +12,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '18dc0aea0331'
-down_revision: Union[str, None] = '5160e64b948f'
+revision: str = '4d1966d6d982'
+down_revision: Union[str, None] = '6b159c38a16a'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
