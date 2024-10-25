@@ -1,6 +1,6 @@
 # app/models/player_ranking.py
 from sqlalchemy import Column, Integer, String
-from app.db.database import Base
+from app.models.base import Base
 
 class PlayerRanking(Base):
     __tablename__ = "player_rankings"

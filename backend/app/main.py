@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from .api.v1.api import api_router
 from .core.config import settings
 from .db.database import engine, Base
-from .models import base, team, player
+from app.models import Base, Tournament, Team, Match, LeaderboardEntry, User
 
 app = FastAPI(title=settings.PROJECT_NAME, version=settings.VERSION)
 

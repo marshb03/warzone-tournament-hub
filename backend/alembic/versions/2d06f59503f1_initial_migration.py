@@ -1,8 +1,8 @@
 """Initial migration
 
-Revision ID: 43f240a8e42c
+Revision ID: 2d06f59503f1
 Revises: 
-Create Date: 2024-10-21 09:05:34.821056
+Create Date: 2024-10-21 10:32:00.041714
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '43f240a8e42c'
+revision: str = '2d06f59503f1'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -39,6 +39,8 @@ def upgrade() -> None:
     sa.Column('start_date', sa.DateTime(), nullable=True),
     sa.Column('end_date', sa.DateTime(), nullable=True),
     sa.Column('creator_id', sa.Integer(), nullable=True),
+    sa.Column('status', sa.Enum('PENDING', 'ONGOING', 'COMPLETED', 'CANCELLED', name='tournamentstatus'), nullable=True),
+    sa.Column('test_column', sa.String(), nullable=True),
     sa.ForeignKeyConstraint(['creator_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
@@ -70,7 +72,13 @@ def upgrade() -> None:
     sa.Column('tournament_id', sa.Integer(), nullable=True),
     sa.Column('round', sa.Integer(), nullable=True),
     sa.Column('match_number', sa.Integer(), nullable=True),
+    sa.Column('team1_id', sa.Integer(), nullable=True),
+    sa.Column('team2_id', sa.Integer(), nullable=True),
     sa.Column('winner_id', sa.Integer(), nullable=True),
+    sa.Column('next_match_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['next_match_id'], ['matches.id'], ),
+    sa.ForeignKeyConstraint(['team1_id'], ['teams.id'], ),
+    sa.ForeignKeyConstraint(['team2_id'], ['teams.id'], ),
     sa.ForeignKeyConstraint(['tournament_id'], ['tournaments.id'], ),
     sa.ForeignKeyConstraint(['winner_id'], ['teams.id'], ),
     sa.PrimaryKeyConstraint('id')

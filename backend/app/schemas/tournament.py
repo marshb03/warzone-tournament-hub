@@ -5,8 +5,14 @@ from typing import List, Optional
 from enum import Enum
 
 class TournamentFormat(str, Enum):
-    SINGLE_ELIMINATION = "single_elimination"
-    DOUBLE_ELIMINATION = "double_elimination"
+    SINGLE_ELIMINATION = "SINGLE_ELIMINATION"
+    DOUBLE_ELIMINATION = "DOUBLE_ELIMINATION"
+    
+class TournamentStatus(str, Enum):
+    PENDING = "PENDING"
+    ONGOING = "ONGOING"
+    COMPLETED = "COMPLETED"
+    CANCELLED = "CANCELLED"
 
 class LeaderboardEntryBase(BaseModel):
     wins: int
@@ -26,16 +32,19 @@ class TournamentBase(BaseModel):
     start_date: datetime
     end_date: Optional[datetime] = None
 
-class TournamentCreate(TournamentBase):
-    pass
+class TournamentCreate(BaseModel):
+    name: str
+    format: TournamentFormat
+    start_date: datetime
+    end_date: datetime
 
 class TournamentUpdate(TournamentBase):
     pass
 
-class Tournament(TournamentBase):
+class Tournament(TournamentCreate):
     id: int
     creator_id: int
-    leaderboard_entries: List[LeaderboardEntry] = []
+    status: TournamentStatus
 
     class Config:
         from_attributes = True

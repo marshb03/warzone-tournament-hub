@@ -3,13 +3,25 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
+from datetime import datetime
 from app import crud, schemas
+from app.crud import tournament
 from app.api import deps
+from app.models.tournament import TournamentStatus
+from app.models.team import Team
+from app.models.match import Match
+from app.models.user import User
+from app.models.leaderboard import LeaderboardEntry
+from app.utils.bracket_generator import generate_bracket
 
 router = APIRouter()
 
 @router.post("/", response_model=schemas.Tournament)
-def create_tournament(tournament: schemas.TournamentCreate, db: Session = Depends(deps.get_db), current_user: schemas.User = Depends(deps.get_current_active_user)):
+def create_tournament(
+    tournament: schemas.TournamentCreate,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_active_user)
+):
     return crud.tournament.create_tournament(db=db, tournament=tournament, creator_id=current_user.id)
 
 @router.get("/{tournament_id}", response_model=schemas.Tournament)
@@ -41,6 +53,90 @@ def delete_tournament(tournament_id: int, db: Session = Depends(deps.get_db), cu
     if db_tournament.creator_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not enough permissions")
     return crud.tournament.delete_tournament(db=db, tournament_id=tournament_id)
+
+@router.post("/{tournament_id}/start", response_model=schemas.Tournament)
+def start_tournament(
+    tournament_id: int,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_active_user)
+):
+    tournament = crud.tournament.get_tournament(db, tournament_id=tournament_id)
+    if not tournament:
+        raise HTTPException(status_code=404, detail="Tournament not found")
+    
+    if tournament.creator_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    
+    if tournament.status != TournamentStatus.PENDING:
+        raise HTTPException(status_code=400, detail="Tournament has already started or is completed")
+    
+    teams = crud.team.get_teams_by_tournament(db, tournament_id=tournament_id)
+    if len(teams) < 2:
+        raise HTTPException(status_code=400, detail="At least 2 teams are required to start a tournament")
+    
+    # Generate bracket
+    generate_bracket(tournament_id, teams, db)
+    
+    # Update tournament status
+    tournament.status = TournamentStatus.ONGOING
+    db.commit()
+    db.refresh(tournament)
+    
+    # Refresh the tournament object to get updated matches
+    tournament = crud.tournament.get_tournament(db, tournament_id=tournament_id)
+    
+    return tournament
+
+@router.post("/{tournament_id}/reset", response_model=schemas.Tournament)
+def reset_tournament(
+    tournament_id: int,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_active_user)
+):
+    tournament = crud.tournament.get_tournament(db, tournament_id=tournament_id)
+    if not tournament:
+        raise HTTPException(status_code=404, detail="Tournament not found")
+    
+    if tournament.creator_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    
+    # Delete all matches
+    db.query(Match).filter(Match.tournament_id == tournament_id).delete()
+    
+    # Reset tournament status
+    tournament.status = TournamentStatus.PENDING
+    
+    # Reset leaderboard entries
+    db.query(LeaderboardEntry).filter(LeaderboardEntry.tournament_id == tournament_id).delete()
+    
+    db.commit()
+    db.refresh(tournament)
+    
+    return tournament
+
+@router.post("/{tournament_id}/end", response_model=schemas.Tournament)
+def end_tournament(
+    tournament_id: int,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_active_user)
+):
+    tournament = crud.tournament.get_tournament(db, tournament_id=tournament_id)
+    if not tournament:
+        raise HTTPException(status_code=404, detail="Tournament not found")
+    
+    if tournament.creator_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    
+    if tournament.status != TournamentStatus.ONGOING:
+        raise HTTPException(status_code=400, detail="Tournament is not ongoing")
+    
+    # Set tournament status to completed
+    tournament.status = TournamentStatus.COMPLETED
+    tournament.end_date = datetime.utcnow()
+    db.commit()
+    db.refresh(tournament)
+    
+    return tournament
 
 '''
 from fastapi import APIRouter, Depends, HTTPException

@@ -1,7 +1,6 @@
-# app/models/leaderboard.py
 from sqlalchemy import Column, Integer, ForeignKey
 from sqlalchemy.orm import relationship
-from app.db.database import Base
+from app.models.base import Base
 
 class LeaderboardEntry(Base):
     __tablename__ = "leaderboard_entries"

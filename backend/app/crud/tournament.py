@@ -1,10 +1,18 @@
 # app/crud/tournament.py
 from sqlalchemy.orm import Session
-from app.models.tournament import Tournament, Team, LeaderboardEntry
-from app.schemas.tournament import TournamentCreate, TournamentUpdate
+from app.models.tournament import Tournament, TournamentFormat, TournamentStatus
+from app.models import Match
+from app.schemas.tournament import TournamentUpdate, TournamentCreate
 
 def create_tournament(db: Session, tournament: TournamentCreate, creator_id: int):
-    db_tournament = Tournament(**tournament.dict(), creator_id=creator_id)
+    db_tournament = Tournament(
+        name=tournament.name,
+        format=TournamentFormat[tournament.format],
+        start_date=tournament.start_date,
+        end_date=tournament.end_date,
+        creator_id=creator_id,
+        status=TournamentStatus.PENDING
+    )
     db.add(db_tournament)
     db.commit()
     db.refresh(db_tournament)

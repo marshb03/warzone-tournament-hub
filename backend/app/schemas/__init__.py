@@ -4,4 +4,4 @@ from .tournament import Tournament, TournamentCreate, TournamentUpdate, Tourname
 from .team import Team, TeamCreate, TeamUpdate, TeamWithPlayers, TeamInTournament
 from .match import Match, MatchCreate, MatchUpdate, MatchWithTeams
 from .token import Token, TokenPayload
-from .leaderboard import LeaderboardEntry, LeaderboardEntryBase, LeaderboardEntryCreate
+from .leaderboard import LeaderboardEntry, LeaderboardEntry, LeaderboardEntryCreate

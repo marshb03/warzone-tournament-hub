@@ -154,17 +154,26 @@ def generate_first_round_over_16(tournament_id: int, teams: List[Team], num_team
     
     return matches
 
-def handle_round_2_16_to_23_teams(tournament_id: int, prev_round_matches: List[Match], num_teams: int, db: Session) -> List[Match]:
+def handle_round_2_over_16(tournament_id: int, prev_round_matches: List[Match], num_teams: int, db: Session) -> List[Match]:
     """
-    Handle Round 2 for tournaments with 16-23 teams.
-    Always creates exactly 8 matches in Round 2.
+    Handle Round 2 for tournaments with more than 16 teams.
+    For 24+ teams: Always creates 8 matches in Round 2
     """
     round_2_matches = []
     match_number = 1
-    total_r2_matches = 8  # Always 8 matches in Round 2
     
-    # Calculate byes
-    num_byes = num_teams - 16
+    # Calculate byes and matches
+    if num_teams <= 24:
+        num_byes = num_teams - 16
+        total_r2_matches = (16 - num_byes) // 2
+    else:
+        num_byes = 32 - num_teams
+        total_r2_matches = 8  # Always 8 matches for 24+ teams
+    
+    # Calculate matches without byes
+    matches_without_bye = total_r2_matches - num_byes
+    # Calculate how many R1 matches we need for non-bye R2 matches
+    top_matches_from_r1 = matches_without_bye * 2
     
     # Create matches for bye teams first
     for seed in range(1, num_byes + 1):
@@ -172,78 +181,13 @@ def handle_round_2_16_to_23_teams(tournament_id: int, prev_round_matches: List[M
             tournament_id=tournament_id,
             round=2,
             match_number=match_number,
-            team1_id=seed
+            team1_id=seed  # Top seeds get byes
         )
         round_2_matches.append(match)
         db.add(match)
         match_number += 1
     
-    # Calculate teams needed for remaining R2 matches
-    remaining_matches_needed = total_r2_matches - num_byes
-    teams_needed_for_r2_matches = remaining_matches_needed * 2
-    
-    # Get the next set of top seeds after byes
-    start_seed = num_byes + 1  # e.g., 7 for 22 teams
-    top_remaining_seeds = list(range(start_seed, start_seed + teams_needed_for_r2_matches))
-    
-    # Pair these teams (highest vs lowest)
-    for i in range(remaining_matches_needed):
-        high_seed = top_remaining_seeds[i]                    # First pair: 7, Second pair: 8
-        low_seed = top_remaining_seeds[-(i + 1)]             # First pair: 10, Second pair: 9
-        
-        match = Match(
-            tournament_id=tournament_id,
-            round=2,
-            match_number=match_number,
-            team1_id=high_seed,    # 7, then 8
-            team2_id=low_seed      # 10, then 9
-        )
-        round_2_matches.append(match)
-        db.add(match)
-        match_number += 1
-    
-    db.flush()
-    
-    # Link Round 1 matches to Round 2
-    prev_round_matches = sorted(prev_round_matches, key=lambda m: m.match_number, reverse=True)
-    round_2_matches = sorted(round_2_matches, key=lambda m: m.match_number)
-    
-    # Link highest Round 1 match numbers to lowest Round 2 match numbers
-    for i, r1_match in enumerate(prev_round_matches):
-        if i < len(round_2_matches):
-            r1_match.next_match_id = round_2_matches[i].id
-    
-    return round_2_matches
-
-def handle_round_2_24_plus_teams(tournament_id: int, prev_round_matches: List[Match], num_teams: int, db: Session) -> List[Match]:
-    """
-    Handle Round 2 for tournaments with 24+ teams.
-    Always has 8 matches, with varying numbers of byes.
-    """
-    round_2_matches = []
-    match_number = 1
-    
-    # Calculate byes
-    num_byes = 32 - num_teams
-    total_r2_matches = 8
-    
-    # Calculate matches without byes and required R1 matches
-    matches_without_bye = total_r2_matches - num_byes
-    top_matches_from_r1 = matches_without_bye * 2
-    
-    # Create bye matches
-    for seed in range(1, num_byes + 1):
-        match = Match(
-            tournament_id=tournament_id,
-            round=2,
-            match_number=match_number,
-            team1_id=seed
-        )
-        round_2_matches.append(match)
-        db.add(match)
-        match_number += 1
-    
-    # Create non-bye matches
+    # Create remaining matches for R1 winners
     while len(round_2_matches) < total_r2_matches:
         match = Match(
             tournament_id=tournament_id,
@@ -256,22 +200,26 @@ def handle_round_2_24_plus_teams(tournament_id: int, prev_round_matches: List[Ma
     
     db.flush()
     
-    # Handle matches without byes first
-    r1_matches_for_r2 = sorted(prev_round_matches[:top_matches_from_r1], 
-                             key=lambda m: m.match_number)
-    r2_no_bye_matches = round_2_matches[num_byes:]
+    # Handle matches without byes
+    if matches_without_bye > 0 and num_teams >= 25:
+        # Get the top matches from R1 that will feed into R2 non-bye matches
+        r1_matches_for_r2 = sorted(prev_round_matches[:top_matches_from_r1], 
+                                 key=lambda m: m.match_number)
+        # Get the non-bye matches from R2
+        r2_no_bye_matches = round_2_matches[num_byes:]
+        
+        # Link R1 matches to R2 (highest vs lowest pattern)
+        for i in range(matches_without_bye):
+            r2_match = r2_no_bye_matches[i]
+            if 2 * i < len(r1_matches_for_r2):
+                low_r1_matches_for_r2 = r1_matches_for_r2[i]
+                high_r1_matches_for_r2 = r1_matches_for_r2[-(i+1)]
+                
+                # Link both matches to the same R2 match
+                low_r1_matches_for_r2.next_match_id = r2_match.id
+                high_r1_matches_for_r2.next_match_id = r2_match.id
     
-    # Link R1 matches to R2 (highest vs lowest pattern)
-    for i in range(matches_without_bye):
-        r2_match = r2_no_bye_matches[i]
-        if 2 * i < len(r1_matches_for_r2):
-            low_r1_match = r1_matches_for_r2[i]
-            high_r1_match = r1_matches_for_r2[-(i+1)]
-            
-            low_r1_match.next_match_id = r2_match.id
-            high_r1_match.next_match_id = r2_match.id
-    
-    # Handle remaining matches with byes
+    # Link remaining R1 matches to R2 bye matches
     remaining_r1 = sorted(prev_round_matches[top_matches_from_r1:], 
                          key=lambda m: m.match_number, reverse=True)
     bye_matches = round_2_matches[:num_byes]
@@ -281,15 +229,6 @@ def handle_round_2_24_plus_teams(tournament_id: int, prev_round_matches: List[Ma
             r1_match.next_match_id = bye_matches[i].id
     
     return round_2_matches
-
-def handle_round_2_over_16(tournament_id: int, prev_round_matches: List[Match], num_teams: int, db: Session) -> List[Match]:
-    """
-    Main handler that delegates to appropriate function based on number of teams.
-    """
-    if 16 <= num_teams <= 23:
-        return handle_round_2_16_to_23_teams(tournament_id, prev_round_matches, num_teams, db)
-    else:
-        return handle_round_2_24_plus_teams(tournament_id, prev_round_matches, num_teams, db)
 
 def handle_subsequent_rounds(tournament_id: int, prev_round_matches: List[Match], round_num: int, db: Session) -> List[Match]:
     """
