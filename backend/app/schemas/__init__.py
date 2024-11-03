@@ -5,3 +5,4 @@ from .team import Team, TeamCreate, TeamUpdate, TeamWithPlayers, TeamInTournamen
 from .match import Match, MatchCreate, MatchUpdate, MatchWithTeams
 from .token import Token, TokenPayload
 from .leaderboard import LeaderboardEntry, LeaderboardEntry, LeaderboardEntryCreate
+from .losers_match import LosersMatch, LosersMatchCreate, DoubleBracketResponse

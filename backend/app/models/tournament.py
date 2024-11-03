@@ -30,3 +30,4 @@ class Tournament(Base):
     teams = relationship("Team", back_populates="tournament", cascade="all, delete-orphan")
     matches = relationship("Match", back_populates="tournament", cascade="all, delete-orphan")
     leaderboard_entries = relationship("LeaderboardEntry", back_populates="tournament", cascade="all, delete-orphan")
+    losers_matches = relationship("LosersMatch", back_populates="tournament", cascade="all, delete-orphan")

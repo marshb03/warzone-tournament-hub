@@ -10,6 +10,7 @@ from app.api import deps
 from app.models.tournament import TournamentStatus
 from app.models.team import Team
 from app.models.match import Match
+from app.models.losers_match import LosersMatch
 from app.models.user import User
 from app.models.leaderboard import LeaderboardEntry
 from app.utils.bracket_generator import generate_bracket
@@ -100,14 +101,29 @@ def reset_tournament(
     if tournament.creator_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not enough permissions")
     
-    # Delete all matches
-    db.query(Match).filter(Match.tournament_id == tournament_id).delete()
+    # Delete matches in correct order to respect foreign key constraints
+    # First, set dropped_from_match_id to NULL in losers matches
+    db.query(LosersMatch)\
+        .filter(LosersMatch.tournament_id == tournament_id)\
+        .update({LosersMatch.dropped_from_match_id: None}, synchronize_session=False)
+    
+    # Now we can safely delete losers matches
+    db.query(LosersMatch)\
+        .filter(LosersMatch.tournament_id == tournament_id)\
+        .delete(synchronize_session=False)
+    
+    # Then delete regular matches
+    db.query(Match)\
+        .filter(Match.tournament_id == tournament_id)\
+        .delete(synchronize_session=False)
     
     # Reset tournament status
     tournament.status = TournamentStatus.PENDING
     
     # Reset leaderboard entries
-    db.query(LeaderboardEntry).filter(LeaderboardEntry.tournament_id == tournament_id).delete()
+    db.query(LeaderboardEntry)\
+        .filter(LeaderboardEntry.tournament_id == tournament_id)\
+        .delete(synchronize_session=False)
     
     db.commit()
     db.refresh(tournament)
