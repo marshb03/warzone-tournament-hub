@@ -5,6 +5,15 @@ from app.models.team import Team
 from math import log2, ceil
 from fastapi import HTTPException
 
+def get_team_id_by_seed(db: Session, tournament_id: int, seed: int) -> int:
+    """Get team ID from a tournament by their seed number."""
+    team = db.query(Team)\
+        .filter(
+            Team.tournament_id == tournament_id,
+            Team.seed == seed
+        ).first()
+    return team.id if team else None
+
 def _get_next_power_of_two(n: int) -> int:
     """Get the next power of 2 that's greater than or equal to n."""
     return 2 ** ceil(log2(n))
@@ -19,9 +28,7 @@ def _calculate_byes(num_teams: int) -> List[int]:
     return list(range(1, num_byes + 1))
 
 def generate_first_round(tournament_id: int, teams: List[Team], bye_seeds: List[int], db: Session) -> List[Match]:
-    """
-    Generate first round matches using seed-based pairing.
-    """
+    """Generate first round matches using seed-based pairing."""
     playing_seeds = [seed for seed in range(1, len(teams) + 1) if seed not in bye_seeds]
     matches = []
     
@@ -31,12 +38,20 @@ def generate_first_round(tournament_id: int, teams: List[Team], bye_seeds: List[
         high_seed = playing_seeds[i]
         low_seed = playing_seeds[-(i+1)]
         
+        # Get team IDs by their seeds
+        high_seed_team = db.query(Team)\
+            .filter(Team.tournament_id == tournament_id, Team.seed == high_seed)\
+            .first()
+        low_seed_team = db.query(Team)\
+            .filter(Team.tournament_id == tournament_id, Team.seed == low_seed)\
+            .first()
+        
         match = Match(
             tournament_id=tournament_id,
             round=1,
             match_number=i + 1,
-            team1_id=high_seed,
-            team2_id=low_seed
+            team1_id=high_seed_team.id,  # Use team ID, not seed
+            team2_id=low_seed_team.id    # Use team ID, not seed
         )
         matches.append(match)
         db.add(match)
@@ -52,7 +67,6 @@ def handle_round_2(tournament_id: int, bye_seeds: List[int], prev_round_matches:
     num_byes = len(bye_seeds)
     
     # Calculate total matches needed for round 2
-    # Total matches = (R1 matches + bye teams) / 2
     total_round_2_matches = (len(prev_round_matches) + num_byes) // 2
     
     # Sort previous round matches by match number (highest to lowest)
@@ -60,11 +74,13 @@ def handle_round_2(tournament_id: int, bye_seeds: List[int], prev_round_matches:
     
     # 1. Create matches for bye teams first
     for seed in bye_seeds:
+        # Get actual team ID for the bye seed
+        team_id = get_team_id_by_seed(db, tournament_id, seed)
         match = Match(
             tournament_id=tournament_id,
             round=2,
             match_number=match_number,
-            team1_id=seed
+            team1_id=team_id  # Now using actual team ID
         )
         round_2_matches.append(match)
         db.add(match)
@@ -86,20 +102,17 @@ def handle_round_2(tournament_id: int, bye_seeds: List[int], prev_round_matches:
     # 3. Link matches with bye teams
     for i in range(num_byes):
         if i < len(prev_round_matches):
-            # Highest match numbers from R1 go against bye teams
             prev_round_matches[i].next_match_id = round_2_matches[i].id
     
     # 4. Handle remaining matches
-    remaining_r1_matches = prev_round_matches[num_byes:]  # Skip matches already assigned to byes
-    remaining_r2_matches = round_2_matches[num_byes:]    # Skip bye matches
+    remaining_r1_matches = prev_round_matches[num_byes:]
+    remaining_r2_matches = round_2_matches[num_byes:]
     
-    # Sort remaining R1 matches to ensure proper high-low pairing
     remaining_r1_matches = sorted(remaining_r1_matches, key=lambda m: m.match_number)
     
     for i in range(len(remaining_r2_matches)):
         current_match = remaining_r2_matches[i]
         if 2 * i < len(remaining_r1_matches):
-            # Link lowest number with highest remaining number
             low_match = remaining_r1_matches[i]
             high_match = remaining_r1_matches[-(i+1)]
             
@@ -141,12 +154,16 @@ def generate_first_round_over_16(tournament_id: int, teams: List[Team], num_team
     
     # Create matches based on pairings
     for high_seed, low_seed in team_pairs:
+        # Get actual team IDs for both seeds
+        high_seed_id = get_team_id_by_seed(db, tournament_id, high_seed)
+        low_seed_id = get_team_id_by_seed(db, tournament_id, low_seed)
+        
         match = Match(
             tournament_id=tournament_id,
             round=1,
             match_number=match_number,
-            team1_id=high_seed,     # Higher seed as team1
-            team2_id=low_seed       # Lower seed as team2
+            team1_id=high_seed_id,     # Now using actual team IDs
+            team2_id=low_seed_id
         )
         matches.append(match)
         db.add(match)
@@ -161,18 +178,20 @@ def handle_round_2_16_to_23_teams(tournament_id: int, prev_round_matches: List[M
     """
     round_2_matches = []
     match_number = 1
-    total_r2_matches = 8  # Always 8 matches in Round 2
+    total_r2_matches = 8
     
     # Calculate byes
     num_byes = num_teams - 16
     
     # Create matches for bye teams first
     for seed in range(1, num_byes + 1):
+        # Get actual team ID for the bye seed
+        team_id = get_team_id_by_seed(db, tournament_id, seed)
         match = Match(
             tournament_id=tournament_id,
             round=2,
             match_number=match_number,
-            team1_id=seed
+            team1_id=team_id  # Now using actual team ID
         )
         round_2_matches.append(match)
         db.add(match)
@@ -183,20 +202,24 @@ def handle_round_2_16_to_23_teams(tournament_id: int, prev_round_matches: List[M
     teams_needed_for_r2_matches = remaining_matches_needed * 2
     
     # Get the next set of top seeds after byes
-    start_seed = num_byes + 1  # e.g., 7 for 22 teams
+    start_seed = num_byes + 1
     top_remaining_seeds = list(range(start_seed, start_seed + teams_needed_for_r2_matches))
     
     # Pair these teams (highest vs lowest)
     for i in range(remaining_matches_needed):
-        high_seed = top_remaining_seeds[i]                    # First pair: 7, Second pair: 8
-        low_seed = top_remaining_seeds[-(i + 1)]             # First pair: 10, Second pair: 9
+        high_seed = top_remaining_seeds[i]
+        low_seed = top_remaining_seeds[-(i + 1)]
+        
+        # Get actual team IDs for both seeds
+        high_seed_id = get_team_id_by_seed(db, tournament_id, high_seed)
+        low_seed_id = get_team_id_by_seed(db, tournament_id, low_seed)
         
         match = Match(
             tournament_id=tournament_id,
             round=2,
             match_number=match_number,
-            team1_id=high_seed,    # 7, then 8
-            team2_id=low_seed      # 10, then 9
+            team1_id=high_seed_id,
+            team2_id=low_seed_id
         )
         round_2_matches.append(match)
         db.add(match)
@@ -208,7 +231,6 @@ def handle_round_2_16_to_23_teams(tournament_id: int, prev_round_matches: List[M
     prev_round_matches = sorted(prev_round_matches, key=lambda m: m.match_number, reverse=True)
     round_2_matches = sorted(round_2_matches, key=lambda m: m.match_number)
     
-    # Link highest Round 1 match numbers to lowest Round 2 match numbers
     for i, r1_match in enumerate(prev_round_matches):
         if i < len(round_2_matches):
             r1_match.next_match_id = round_2_matches[i].id

@@ -67,10 +67,11 @@ def calculate_losers_bracket_structure(num_teams: int) -> Dict[int, Dict]:
     # Calculate Round 3 matches
     if num_teams <= 8:
         r3_matches = 1
-    elif num_teams <= 12:
+    elif num_teams <= 16:
         r3_matches = 2
-    else:  # 13-32 teams
+    elif num_teams <= 32:
         r3_matches = 4
+
 
     if r3_matches > 0:
         structure[3] = {
@@ -100,8 +101,10 @@ def calculate_losers_bracket_structure(num_teams: int) -> Dict[int, Dict]:
             if round_num == 4:
                 current_matches = 2
             elif round_num == 5:
-                current_matches = 1
+                current_matches = 2
             elif round_num == 6:
+                current_matches = 1
+            elif round_num == 7:
                 current_matches = 1
             else:
                 break
@@ -131,7 +134,9 @@ def calculate_losers_bracket_structure(num_teams: int) -> Dict[int, Dict]:
 def generate_losers_bracket(tournament_id: int, num_teams: int, db: Session) -> List[LosersMatch]:
     """
     Generate complete losers bracket with all matches and links.
-    Handles tournament sizes from 4-32 teams.
+    - Round 1 winners -> Round 2 (same match number, face winners bracket losers)
+    - Odd rounds: Winners progress to same match number to face winners bracket losers
+    - Even rounds: Pair lowest vs highest match numbers from previous round
     """
     structure = calculate_losers_bracket_structure(num_teams)
     matches = []
@@ -158,124 +163,129 @@ def generate_losers_bracket(tournament_id: int, num_teams: int, db: Session) -> 
         matches_by_round[round_num] = round_matches
         matches.extend(round_matches)
 
-    # Ensure all matches are created first
     db.flush()
 
     # Second pass: Link matches between rounds
     for round_num in range(1, max(structure.keys())):
         current_matches = matches_by_round[round_num]
         if round_num + 1 in matches_by_round:
-            next_matches = matches_by_round[round_num + 1]
+            next_round_matches = matches_by_round[round_num + 1]
+            
+            if round_num % 2 == 0:  # Even rounds (2, 4, 6, 8)
+                # Pair lowest with highest match numbers
+                for i in range(len(current_matches) // 2):
+                    low_match = current_matches[i]
+                    high_match = current_matches[-(i + 1)]
+                    if i < len(next_round_matches):
+                        next_match = next_round_matches[i]
+                        low_match.next_match_id = next_match.id
+                        high_match.next_match_id = next_match.id
+            else:  # Odd rounds (1, 3, 5, 7)
+                # Winners progress to same match number in next round
+                for curr_match in current_matches:
+                    next_match = next((m for m in next_round_matches 
+                                     if m.match_number == curr_match.match_number), None)
+                    if next_match:
+                        curr_match.next_match_id = next_match.id
 
-            if round_num == 1:
-                # First round matches pair up in next round
-                for i in range(0, len(current_matches), 2):
-                    if i // 2 < len(next_matches):
-                        next_match = next_matches[i // 2]
-                        if i < len(current_matches):
-                            current_matches[i].next_match_id = next_match.id
-                        if i + 1 < len(current_matches):
-                            current_matches[i + 1].next_match_id = next_match.id
-            else:
-                # For subsequent rounds, winners progress sequentially
-                for i in range(len(current_matches)):
-                    if i // 2 < len(next_matches):
-                        current_matches[i].next_match_id = next_matches[i // 2].id
-
-    # Create linking metadata
-    for round_num, round_info in structure.items():
-        round_matches = matches_by_round[round_num]
-        for match in round_matches:
-            match.receives_losers_from = round_info['receives_losers_from']
-
-    # Final commit
     db.commit()
-
-    # Return all matches
     return matches
 
 def add_loser_to_bracket(tournament_id: int, loser_id: int, winners_match_num: int, winners_round: int, db: Session) -> None:
     """
     Place team that lost in winners bracket into appropriate losers match.
-    Implements crossing pattern for first round and proper placement for subsequent rounds.
+    Round 1: Pairs losers from winners bracket round 1 (lowest vs highest match numbers)
+    Round 2: Winners bracket round 2 losers face winners from losers round 1
+    Odd Rounds (3,5,7): Losers go to matching round in losers bracket
     """
-    # Get total number of teams in tournament to determine structure
-    total_teams = db.query(Team).filter(Team.tournament_id == tournament_id).count()
-    structure = calculate_losers_bracket_structure(total_teams)
-    
     if winners_round == 1:
-        # Handle Round 1 losers with crossing pattern
+        # Handle Round 1 losers - pair lowest with highest match numbers
         total_r1_matches = db.query(Match)\
             .filter(
                 Match.tournament_id == tournament_id,
                 Match.round == 1
             )\
             .count()
-            
-        # Calculate which losers match to place the team in
-        if total_r1_matches == 4:  # 8 teams
-            # Implement 1-4, 2-3 crossing pattern
-            if winners_match_num in [1, 4]:
-                losers_match_num = 101  # First and fourth go to first match
-            else:  # winners_match_num in [2, 3]
-                losers_match_num = 102  # Second and third go to second match
-        else:
-            # For other tournament sizes, calculate based on structure
-            matches_per_group = total_r1_matches // structure[1]['num_matches']
-            group_num = (winners_match_num - 1) // matches_per_group
-            losers_match_num = 101 + group_num
         
-        # Find the appropriate losers match
+        if winners_match_num <= total_r1_matches // 2:
+            corresponding_match = total_r1_matches - winners_match_num + 1
+            losers_match_num = 100 + winners_match_num
+        else:
+            corresponding_match = total_r1_matches - winners_match_num + 1
+            losers_match_num = 100 + corresponding_match
+
         losers_match = db.query(LosersMatch)\
             .filter(
                 LosersMatch.tournament_id == tournament_id,
                 LosersMatch.round == 1,
                 LosersMatch.match_number == losers_match_num
             ).first()
-            
+        
         if losers_match:
-            # Place team in first available position
-            if losers_match.team1_id is None:
+            if winners_match_num <= total_r1_matches // 2:
                 losers_match.team1_id = loser_id
             else:
                 losers_match.team2_id = loser_id
-            db.flush()
-    
-    else:  # Handle losers from Round 2 and beyond
-        target_round = 2
+            
+    elif winners_round == 2:
+        # Handle Round 2 losers - they go against winners from losers round 1
+        total_r2_matches = db.query(Match)\
+            .filter(
+                Match.tournament_id == tournament_id,
+                Match.round == 2
+            )\
+            .count()
         
-        # For semifinals and finals losers, they go to specific later rounds
-        if winners_round >= 3:
-            # Find the appropriate round based on tournament size
-            for round_num, round_info in structure.items():
-                if round_info['receives_losers_from'] == winners_round:
-                    target_round = round_num
-                    break
-        
-        # Calculate which match in the target round should receive this loser
-        match_index = (winners_match_num - 1) % structure[target_round]['num_matches']
-        losers_match_num = 101 + match_index
+        # Inverse the match number (highest winners match goes to lowest losers match)
+        losers_match_num = 101 + (total_r2_matches - winners_match_num)
         
         losers_match = db.query(LosersMatch)\
             .filter(
                 LosersMatch.tournament_id == tournament_id,
-                LosersMatch.round == target_round,
+                LosersMatch.round == 2,
                 LosersMatch.match_number == losers_match_num
             ).first()
         
         if losers_match:
-            # For rounds after the first, losers from winners bracket always go to team2_id
-            # This ensures they face the winner coming up through the losers bracket
+            # R2 losers always go to team2_id position
             losers_match.team2_id = loser_id
-            db.flush()
+            
+    else:
+        # Map winners rounds to corresponding losers rounds
+        losers_round_map = {
+            3: 4,  # Winners R3 losers go to Losers R4
+            4: 6,  # Winners R4 losers go to Losers R6
+            5: 8   # Winners R5 losers go to Losers R8
+        }
+        
+        target_losers_round = losers_round_map.get(winners_round)
+        if target_losers_round:
+            total_matches = db.query(Match)\
+                .filter(
+                    Match.tournament_id == tournament_id,
+                    Match.round == winners_round
+                )\
+                .count()
+            
+            # Inverse the match number (highest winners match goes to lowest losers match)
+            losers_match_num = 101 + (total_matches - winners_match_num)
+            
+            losers_match = db.query(LosersMatch)\
+                .filter(
+                    LosersMatch.tournament_id == tournament_id,
+                    LosersMatch.round == target_losers_round,
+                    LosersMatch.match_number == losers_match_num
+                ).first()
+            
+            if losers_match:
+                losers_match.team2_id = loser_id
 
-    # Commit changes
     db.commit()
-    
+
 def update_losers_bracket(match_id: int, winner_id: int, db: Session) -> LosersMatch:
     """
     Handle updates for losers bracket matches.
-    Manages progression through the bracket and into championship matches.
+    For Round 2 winners, pair lowest with highest match numbers for Round 3.
     """
     losers_match = db.query(LosersMatch).filter(LosersMatch.id == match_id).first()
     if not losers_match:
@@ -288,53 +298,30 @@ def update_losers_bracket(match_id: int, winner_id: int, db: Session) -> LosersM
     losers_match.winner_id = winner_id
     db.flush()
 
-    # Get tournament info for structure calculation
-    total_teams = db.query(Team)\
-        .filter(Team.tournament_id == losers_match.tournament_id)\
-        .count()
-    structure = calculate_losers_bracket_structure(total_teams)
-    
-    # Get the maximum round number for this tournament size
-    max_round = max(structure.keys())
-
-    # Check if this is the final losers bracket match
-    if losers_match.round == max_round and losers_match.match_number == 101:
-        # Find and update the championship match
-        championship_match = db.query(Match)\
-            .filter(
-                Match.tournament_id == losers_match.tournament_id,
-                Match.round == 98,
-                Match.match_number == 201
-            ).first()
-            
-        if championship_match:
-            championship_match.team2_id = winner_id
-            db.flush()
-    else:
-        # Normal progression logic
-        if losers_match.next_match_id:
-            next_match = db.query(LosersMatch)\
-                .filter(LosersMatch.id == losers_match.next_match_id)\
-                .first()
+    # Handle progression
+    if losers_match.next_match_id:
+        next_match = db.query(LosersMatch).filter(LosersMatch.id == losers_match.next_match_id).first()
+        if next_match:
+            if losers_match.round == 2:
+                # For round 2 winners, place based on match number (low vs high pairing)
+                total_r2_matches = db.query(LosersMatch)\
+                    .filter(
+                        LosersMatch.tournament_id == losers_match.tournament_id,
+                        LosersMatch.round == 2
+                    ).count()
                 
-            if next_match:
-                # For first round matches, winners go to team1_id positions
-                if losers_match.round == 1:
+                # Lower match numbers go to team1_id, higher to team2_id
+                if losers_match.match_number <= (100 + total_r2_matches // 2):
                     next_match.team1_id = winner_id
                 else:
-                    # For other rounds, place winner in first available position
-                    if next_match.team1_id is None:
-                        next_match.team1_id = winner_id
-                    else:
-                        next_match.team2_id = winner_id
-                        
-                db.flush()
+                    next_match.team2_id = winner_id
+            else:
+                # Normal progression for other rounds
+                if not next_match.team1_id:
+                    next_match.team1_id = winner_id
+                else:
+                    next_match.team2_id = winner_id
 
-    # Commit all changes
-    try:
-        db.commit()
-        db.refresh(losers_match)
-        return losers_match
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=500, detail=str(e))    
+    db.commit()
+    db.refresh(losers_match)
+    return losers_match 

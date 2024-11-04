@@ -1,10 +1,12 @@
 # app/api/v1/endpoints/match.py
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from typing import List, Union
 from app import crud, schemas
 from app.api import deps
 from app.models.tournament import TournamentFormat
+from app.models.match import Match
+from app.models.losers_match import LosersMatch
 
 router = APIRouter()
 
@@ -37,10 +39,36 @@ def read_matches_by_tournament(tournament_id: int, db: Session = Depends(deps.ge
         raise HTTPException(status_code=404, detail="Tournament not found")
     
     if tournament.format == TournamentFormat.SINGLE_ELIMINATION:
-        return crud.match.get_matches_by_tournament(db, tournament_id=tournament_id)
+        matches = db.query(Match)\
+            .options(
+                joinedload(Match.team1),
+                joinedload(Match.team2),
+                joinedload(Match.winner),
+                joinedload(Match.loser)
+            )\
+            .filter(Match.tournament_id == tournament_id)\
+            .all()
+        return matches
     else:
-        winners_matches = crud.match.get_matches_by_tournament(db, tournament_id=tournament_id)
-        losers_matches = crud.losers_match.get_matches_by_tournament(db, tournament_id=tournament_id)
+        winners_matches = db.query(Match)\
+            .options(
+                joinedload(Match.team1),
+                joinedload(Match.team2),
+                joinedload(Match.winner),
+                joinedload(Match.loser)
+            )\
+            .filter(Match.tournament_id == tournament_id)\
+            .all()
+            
+        losers_matches = db.query(LosersMatch)\
+            .options(
+                joinedload(LosersMatch.team1),
+                joinedload(LosersMatch.team2),
+                joinedload(LosersMatch.winner)
+            )\
+            .filter(LosersMatch.tournament_id == tournament_id)\
+            .all()
+            
         finals_matches = [m for m in winners_matches if m.round >= max(m.round for m in winners_matches) - 1]
         regular_winners = [m for m in winners_matches if m not in finals_matches]
         
