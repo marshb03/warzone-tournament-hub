@@ -1,4 +1,11 @@
+// src/routes/index.jsx
 import { Routes, Route } from 'react-router-dom';
+import { ProtectedRoute } from '../components/auth/ProtectedRoute';
+import SuperuserRoute from '../components/auth/SuperuserRoute';
+import ForgotPassword from '../pages/auth/ForgotPassword';
+import ResetPassword from '../pages/auth/ResetPassword';
+
+// Pages
 import Home from '../pages/Home';
 import Tournaments from '../pages/Tournaments';
 import TournamentDetail from '../pages/TournamentDetail';
@@ -9,6 +16,11 @@ import Profile from '../pages/Profile';
 import Login from '../pages/auth/Login';
 import Register from '../pages/auth/Register';
 import NotFound from '../pages/NotFound';
+
+// Admin/Superuser pages (you'll need to create these)
+import TournamentManagement from '../pages/admin/TournamentManagement';
+import UserManagement from '../pages/admin/UserManagement';
+import AdminDashboard from '../pages/admin/AdminDashboard';
 
 const AppRoutes = () => {
   return (
@@ -22,9 +34,32 @@ const AppRoutes = () => {
       <Route path="/rankings" element={<PlayerRankings />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password/:token" element={<ResetPassword />} />
+
+      {/* Protected Routes (require login) */}
+      <Route path="/profile" element={
+        <ProtectedRoute>
+          <Profile />
+        </ProtectedRoute>
+      } />
       
-      {/* Protected Routes */}
-      <Route path="/profile" element={<Profile />} />
+      {/* Superuser/Admin Routes */}
+      <Route path="/admin" element={
+        <SuperuserRoute>
+          <AdminDashboard />
+        </SuperuserRoute>
+      } />
+      <Route path="/admin/tournaments" element={
+        <SuperuserRoute>
+          <TournamentManagement />
+        </SuperuserRoute>
+      } />
+      <Route path="/admin/users" element={
+        <SuperuserRoute>
+          <UserManagement />
+        </SuperuserRoute>
+      } />
       
       {/* Catch all route */}
       <Route path="*" element={<NotFound />} />
