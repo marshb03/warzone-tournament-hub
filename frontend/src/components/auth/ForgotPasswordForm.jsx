@@ -1,29 +1,53 @@
 // src/components/auth/ForgotPasswordForm.jsx
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 const ForgotPasswordForm = () => {
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
-  const { resetPassword } = useAuth();
+  const [success, setSuccess] = useState(false);
+  const { forgotPassword } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
     setError('');
-    setSuccessMessage('');
+    setIsLoading(true);
 
     try {
-      await resetPassword(email);
-      setSuccessMessage('Password reset instructions have been sent to your email');
+      await forgotPassword(email);
+      setSuccess(true);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to send reset email');
+      console.error('Password reset error:', err);
+      setError('Failed to send reset email. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
+
+  if (success) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full space-y-8">
+          <div className="rounded-md bg-green-50 p-4">
+            <h2 className="text-lg font-medium text-green-800">Check Your Email</h2>
+            <p className="mt-2 text-sm text-green-600">
+              If an account exists with this email, you will receive password reset instructions.
+            </p>
+          </div>
+          <div className="text-center">
+            <Link
+              to="/login"
+              className="font-medium text-indigo-600 hover:text-indigo-500"
+            >
+              Back to Login
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -40,12 +64,6 @@ const ForgotPasswordForm = () => {
         {error && (
           <div className="rounded-md bg-red-50 p-4">
             <div className="text-sm text-red-700">{error}</div>
-          </div>
-        )}
-
-        {successMessage && (
-          <div className="rounded-md bg-green-50 p-4">
-            <div className="text-sm text-green-700">{successMessage}</div>
           </div>
         )}
 
@@ -74,6 +92,15 @@ const ForgotPasswordForm = () => {
             >
               {isLoading ? 'Sending...' : 'Send Reset Instructions'}
             </button>
+          </div>
+
+          <div className="text-center">
+            <Link
+              to="/login"
+              className="font-medium text-indigo-600 hover:text-indigo-500"
+            >
+              Back to Login
+            </Link>
           </div>
         </form>
       </div>

@@ -2,8 +2,8 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { validatePassword } from '../../utils/validation';
 import { Eye, EyeOff } from 'lucide-react';
+import PasswordRequirements from './PasswordRequirements';
 
 const ResetPasswordForm = () => {
   const { token } = useParams();
@@ -22,13 +22,7 @@ const ResetPasswordForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-
-    // Validate password
-    const passwordErrors = validatePassword(formData.password);
-    if (passwordErrors.length > 0) {
-      setError(passwordErrors.join('\n'));
-      return;
-    }
+    console.log('Attempting password reset with token:', token);
 
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
@@ -43,7 +37,8 @@ const ResetPasswordForm = () => {
         state: { message: 'Password has been reset successfully! Please log in.' }
       });
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to reset password');
+      const errorMessage = err.response?.data?.detail || 'Failed to reset password';
+      setError(typeof errorMessage === 'object' ? JSON.stringify(errorMessage) : errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -56,11 +51,14 @@ const ResetPasswordForm = () => {
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Reset your password
           </h2>
+          <p className="mt-2 text-center text-sm text-gray-600">
+            Choose a strong password to protect your account
+          </p>
         </div>
 
         {error && (
           <div className="rounded-md bg-red-50 p-4">
-            <pre className="text-sm text-red-700 whitespace-pre-line">{error}</pre>
+            <div className="text-sm text-red-700">{error}</div>
           </div>
         )}
 
@@ -108,6 +106,11 @@ const ResetPasswordForm = () => {
               />
             </div>
           </div>
+
+          {/* Add Password Requirements here, after the password inputs but before the submit button */}
+          {formData.password && (
+            <PasswordRequirements password={formData.password} />
+          )}
 
           <div>
             <button

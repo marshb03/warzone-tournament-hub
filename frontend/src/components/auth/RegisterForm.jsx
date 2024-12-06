@@ -1,11 +1,11 @@
 // src/components/auth/RegisterForm.jsx
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Eye, EyeOff } from 'lucide-react';
+import PasswordRequirements from './PasswordRequirements';
 
 const RegisterForm = () => {
-  const navigate = useNavigate();
   const { register } = useAuth();
   
   const [formData, setFormData] = useState({
@@ -18,6 +18,7 @@ const RegisterForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [registrationSuccess, setRegistrationSuccess] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -40,37 +41,69 @@ const RegisterForm = () => {
       setError('Password must be at least 8 characters long');
       return false;
     }
+    if (!/[A-Z]/.test(formData.password)) {
+      setError('Password must contain at least one uppercase letter');
+      return false;
+    }
+    if (!/[a-z]/.test(formData.password)) {
+      setError('Password must contain at least one lowercase letter');
+      return false;
+    }
+    if (!/\d/.test(formData.password)) {
+      setError('Password must contain at least one number');
+      return false;
+    }
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(formData.password)) {
+      setError('Password must contain at least one special character');
+      return false;
+    }
     return true;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-  
+
     if (!validateForm()) {
       return;
     }
-  
+
     setIsLoading(true);
-  
+
     try {
-      console.log('Attempting registration with:', {
-        email: formData.email,
-        username: formData.username,
-      });
       await register(formData.email, formData.username, formData.password);
-      navigate('/login', { 
-        state: { message: 'Registration successful! Please log in.' }
-      });
+      setRegistrationSuccess(true);
     } catch (err) {
-      console.error('Full registration error:', err);
-      console.error('Error response:', err.response);
-      console.error('Error data:', err.response?.data);
+      console.error('Registration error:', err);
       setError(err.response?.data?.detail || 'Failed to register. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
+
+  if (registrationSuccess) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full space-y-8 text-center">
+          <div className="rounded-md bg-green-50 p-4">
+            <h2 className="text-lg font-medium text-green-800">Registration Successful!</h2>
+            <p className="mt-2 text-sm text-green-700">
+              Please check your email to verify your account. 
+              If you don&apos;t see the email, please check your spam folder.
+            </p>
+          </div>
+          <div className="mt-4">
+            <Link
+              to="/login"
+              className="font-medium text-indigo-600 hover:text-indigo-500"
+            >
+              Back to Login
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -133,6 +166,9 @@ const RegisterForm = () => {
                 value={formData.password}
                 onChange={handleInputChange}
               />
+              {formData.password && (
+                <PasswordRequirements password={formData.password} />
+              )}
               <button
                 type="button"
                 className="absolute inset-y-0 right-0 pr-3 flex items-center"

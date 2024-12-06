@@ -12,13 +12,23 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     DATABASE_URL: str
 
-    # Email settings
+    # Frontend URL for reset password and verification links
+    FRONTEND_URL: str = "http://localhost:3000"
+
+    # Email settings for ranking form
     EMAIL_FROM: Optional[str] = None
     EMAIL_RECIPIENTS: Optional[str] = None
-    SMTP_SERVER: Optional[str] = None
+
+    # SMTP settings (used for both ranking form and auth emails)
+    SMTP_HOST: Optional[str] = None  # Changed from SMTP_SERVER for consistency
     SMTP_PORT: Optional[int] = None
-    SMTP_USERNAME: Optional[str] = None
+    SMTP_USER: Optional[str] = None  # Changed from SMTP_USERNAME for consistency
     SMTP_PASSWORD: Optional[str] = None
+    SMTP_TLS: bool = True
+
+    # Additional email settings for auth
+    EMAIL_FROM_ADDRESS: str = "noreply@example.com"  # Default fallback
+    EMAIL_FROM_NAME: str = "Warzone Tournament Hub"
 
     @field_validator('EMAIL_RECIPIENTS')
     @classmethod
@@ -27,6 +37,15 @@ class Settings(BaseSettings):
             return []
         return [email.strip() for email in v.split(',') if email.strip()]
 
-    model_config = SettingsConfigDict(env_file=".env")
+    # Use EMAIL_FROM if set, otherwise use EMAIL_FROM_ADDRESS
+    @field_validator('EMAIL_FROM_ADDRESS')
+    @classmethod
+    def set_email_from(cls, v: str, values) -> str:
+        return values.data.get('EMAIL_FROM') or v
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        extra="allow"
+    )
 
 settings = Settings()

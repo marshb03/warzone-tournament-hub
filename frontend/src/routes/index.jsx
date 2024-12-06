@@ -2,8 +2,8 @@
 import { Routes, Route } from 'react-router-dom';
 import { ProtectedRoute } from '../components/auth/ProtectedRoute';
 import SuperuserRoute from '../components/auth/SuperuserRoute';
-import ForgotPassword from '../pages/auth/ForgotPassword';
-import ResetPassword from '../pages/auth/ResetPassword';
+import ForgotPasswordForm from '../components/auth/ForgotPasswordForm';
+import ResetPasswordForm from '../components/auth/ResetPasswordForm';
 
 // Pages
 import Home from '../pages/Home';
@@ -34,8 +34,8 @@ const AppRoutes = () => {
       <Route path="/rankings" element={<PlayerRankings />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/reset-password/:token" element={<ResetPassword />} />
+      <Route path="/forgot-password" element={<ForgotPasswordForm />} />
+      <Route path="/reset-password/:token" element={<ResetPasswordForm />} />
 
       {/* Protected Routes (require login) */}
       <Route path="/profile" element={

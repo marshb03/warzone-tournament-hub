@@ -70,12 +70,36 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const updateProfile = async (userData) => {
+    const updatedUser = await authService.updateProfile(userData);
+    setUser(updatedUser);
+    return updatedUser;
+  }; 
+
   const resetPassword = async (email) => {
     try {
       setError(null);
       return await authService.resetPassword(email);
     } catch (error) {
       setError(error.response?.data?.detail || error.message);
+      throw error;
+    }
+  };
+
+  const forgotPassword = async (email) => {
+    try {
+      return await authService.forgotPassword(email);
+    } catch (error) {
+      console.error('Forgot password error:', error);
+      throw error;
+    }
+  };
+
+  const confirmPasswordReset = async (token, newPassword) => {
+    try { 
+      return await authService.resetPassword(token, newPassword)
+    } catch (error) {
+      console.error('Reset password error:', error);
       throw error;
     }
   };
@@ -87,7 +111,10 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     register,
+    updateProfile,
     resetPassword,
+    forgotPassword,
+    confirmPasswordReset,
     isAuthenticated: !!user,
     isSuperuser: user?.is_superuser || false,
   };

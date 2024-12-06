@@ -46,6 +46,29 @@ async login(emailOrUsername, password, rememberMe = false) {
     }
   },
 
+  async requestProfileUpdateToken() {
+    const response = await api.post('/api/v1/request-profile-update');
+    return response.data.token;
+  },
+
+  async updateProfile(token, userData) {
+    const response = await api.put(`/api/v1/update-profile/${token}`, userData);
+    return response.data;
+  },
+
+  async forgotPassword(email) {
+    try {
+      // Log the attempt
+      console.log('Attempting to send reset email to:', email);
+      const response = await api.post(`/api/v1/forgot-password?email=${email}`);
+      console.log('Reset email response:', response);
+      return response.data;
+    } catch (error) {
+      console.error('Reset email error:', error);
+      throw error;
+    }
+  },
+
   async register(email, username, password) {
     try {
       const response = await api.post('/api/v1/users/users', {
@@ -68,6 +91,18 @@ async login(emailOrUsername, password, rememberMe = false) {
     return user;
   },
 
+  async resetPassword(token, newPassword) {
+    try {
+      const response = await api.post(`/api/v1/reset-password/${token}`, {
+        new_password: newPassword
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Reset password service error:', error);
+      throw error;
+    }
+  },
+  
   async refreshAuth() {
     const credentials = storage.getSecure('credentials');
     if (!credentials) {

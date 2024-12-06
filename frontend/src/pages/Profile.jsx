@@ -1,10 +1,14 @@
 // src/pages/Profile.jsx
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import ProfileSettings from '../components/profile/ProfileSettings';
+import Modal from '../components/common/Modal';
+
 
 const Profile = () => {
   const { user, isSuperuser } = useAuth();
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
@@ -16,8 +20,20 @@ const Profile = () => {
           <p className="text-gray-600">Username: {user?.username}</p>
           <p className="text-gray-600">Email: {user?.email}</p>
           <p className="text-gray-600">Role: {isSuperuser ? 'Administrator' : 'User'}</p>
+          
+          {/* Add Update Information Button */}
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+          >
+            Update Information
+          </button>
         </div>
       </div>
+
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+        <ProfileSettings onClose={() => setIsModalOpen(false)} />
+      </Modal>
 
       {/* Admin Section - Only visible to superusers */}
       {isSuperuser && (
