@@ -11,7 +11,7 @@ from app.core.config import settings
 from app.db.database import SessionLocal
 from fastapi.security import OAuth2PasswordBearer
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/login/access-token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/login/access-token")
 
 def get_db():
     db = SessionLocal()
@@ -24,11 +24,14 @@ async def get_current_user(
     db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)
 ) -> models.User:
     try:
+        # print("Received token:", token)  # Debug log
         payload = jwt.decode(
             token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
         )
+        # print("Token payload:", payload)  # Debug log
         token_data = schemas.TokenPayload(**payload)
-    except (JWTError, ValidationError):
+    except (JWTError, ValidationError) as e:
+        # print("Token validation error:", str(e))  # Debug log
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Could not validate credentials",
@@ -36,6 +39,7 @@ async def get_current_user(
     user = crud.user.get_user(db, user_id=token_data.sub)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    # print("Found user:", user.id, user.username)  # Debug log
     return user
 
 async def get_current_active_user(

@@ -15,6 +15,7 @@ class TournamentStatus(enum.Enum):
     COMPLETED = "COMPLETED"
     CANCELLED = "CANCELLED"
 
+# app/models/tournament.py
 class Tournament(Base):
     __tablename__ = "tournaments"
 
@@ -22,7 +23,11 @@ class Tournament(Base):
     name = Column(String, index=True)
     format = Column(Enum(TournamentFormat))
     start_date = Column(DateTime, default=datetime.utcnow)
+    start_time = Column(String)  # Add this
     end_date = Column(DateTime)
+    team_size = Column(Integer)  # Add this
+    max_teams = Column(Integer)  # Add this
+    current_teams = Column(Integer, default=0)  # Add this
     creator_id = Column(Integer, ForeignKey("users.id"))
     status = Column(Enum(TournamentStatus), default=TournamentStatus.PENDING)
  

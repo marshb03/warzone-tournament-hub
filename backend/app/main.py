@@ -8,15 +8,15 @@ from app.models import Base, Tournament, Team, Match, LeaderboardEntry, User
 
 app = FastAPI(title=settings.PROJECT_NAME, version=settings.VERSION)
 
-# Add CORS middleware configuration
+# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Your React app's URL
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
     allow_credentials=True,
-    allow_methods=["*"],  # Allows all methods (GET, POST, etc.)
-    allow_headers=["*"],  # Allows all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["*"],
 )
-
 # Create database tables
 Base.metadata.create_all(bind=engine)
 

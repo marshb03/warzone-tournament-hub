@@ -15,7 +15,8 @@ api.interceptors.request.use(
   (config) => {
     const token = storage.getSecure('token');
     if (token) {
-      config.headers.Authorization = token; // Token already includes 'Bearer '
+      // Make sure there's no extra whitespace
+      config.headers.Authorization = token.trim();
     }
     return config;
   },

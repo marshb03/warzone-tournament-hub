@@ -32,9 +32,15 @@ def read_tournament(tournament_id: int, db: Session = Depends(deps.get_db)):
         raise HTTPException(status_code=404, detail="Tournament not found")
     return db_tournament
 
+# app/api/v1/endpoints/tournament.py
 @router.get("/", response_model=List[schemas.Tournament])
 def read_tournaments(skip: int = 0, limit: int = 100, db: Session = Depends(deps.get_db)):
     tournaments = crud.tournament.get_tournaments(db, skip=skip, limit=limit)
+    # Add username to each tournament
+    for tournament in tournaments:
+        user = db.query(User).filter(User.id == tournament.creator_id).first()
+        if user:
+            setattr(tournament, 'creator_username', user.username)
     return tournaments
 
 @router.put("/{tournament_id}", response_model=schemas.Tournament)

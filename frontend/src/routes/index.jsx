@@ -21,6 +21,7 @@ import NotFound from '../pages/NotFound';
 import TournamentManagement from '../pages/admin/TournamentManagement';
 import UserManagement from '../pages/admin/UserManagement';
 import AdminDashboard from '../pages/admin/AdminDashboard';
+import CreateTournament from '../pages/admin/CreateTournament';
 
 const AppRoutes = () => {
   return (
@@ -42,6 +43,11 @@ const AppRoutes = () => {
         <ProtectedRoute>
           <Profile />
         </ProtectedRoute>
+      } />
+      <Route path="/admin/tournaments/new" element={
+        <SuperuserRoute>
+          <CreateTournament />
+        </SuperuserRoute>
       } />
       
       {/* Superuser/Admin Routes */}

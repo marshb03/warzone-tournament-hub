@@ -13,14 +13,14 @@ const AdminDashboard = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Tournament Management Card */}
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-xl font-semibold mb-4">Tournament Management</h2>
-          <p className="text-gray-600 mb-4">Create, edit, and manage tournaments</p>
+        <div className="bg-[#1A237E] p-6 rounded-lg shadow-lg">
+        <h2 className="text-xl font-semibold mb-4 text-white">Tournament Management</h2>
+        <p className="text-gray-300 mb-4">Create, edit, and manage tournaments</p>
           <Link
-            to="/admin/tournaments"
-            className="inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            to="/admin/tournaments/new"
+            className="inline-block bg-[#2979FF] text-white px-4 py-2 rounded hover:bg-[#2979FF]/90 transition-colors"
           >
-            Manage Tournaments
+            Create Tournament
           </Link>
         </div>
 

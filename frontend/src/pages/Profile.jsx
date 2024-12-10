@@ -64,6 +64,14 @@ const Profile = () => {
                 <h3 className="font-semibold text-blue-900">Admin Dashboard</h3>
                 <p className="text-sm text-blue-700">View overall system statistics</p>
               </Link>
+
+              <Link
+                to="/admin/tournaments/new"
+                className="block p-4 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200"
+                >
+                <h3 className="font-semibold text-blue-900">Create Tournament</h3>
+                <p className="text-sm text-blue-700">Set up a new tournament</p>
+              </Link>
             </div>
           </div>
         </div>

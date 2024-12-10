@@ -3,6 +3,7 @@ import { encryption } from '../utils/encryption';
 
 export const storage = {
   setSecure(key, value) {
+    // Remove the token formatting here - let the API handle it
     const encrypted = encryption.encrypt(JSON.stringify(value));
     localStorage.setItem(key, encrypted);
   },

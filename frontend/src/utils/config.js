@@ -21,8 +21,8 @@ const config = {
           passwordResetConfirm: '/api/v1/password-reset-confirm',
       },
       tournaments: {
-          list: '/api/v1/tournaments',
-          create: '/api/v1/tournaments',
+          list: '/api/v1/tournaments/',
+          create: '/api/v1/tournaments/',
           details: (id) => `/api/v1/tournaments/${id}`,
           update: (id) => `/api/v1/tournaments/${id}`,
           delete: (id) => `/api/v1/tournaments/${id}`,

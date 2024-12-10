@@ -30,21 +30,43 @@ class TournamentBase(BaseModel):
     name: str
     format: TournamentFormat
     start_date: datetime
+    start_time: str | None = None  # Make nullable
+    team_size: int | None = None   # Make nullable
+    max_teams: int | None = None   # Make nullable
+    current_teams: int = 0
     end_date: Optional[datetime] = None
 
 class TournamentCreate(BaseModel):
     name: str
     format: TournamentFormat
     start_date: datetime
+    start_time: str
     end_date: datetime
+    team_size: int
+    max_teams: int
 
-class TournamentUpdate(TournamentBase):
-    pass
+class TournamentUpdate(BaseModel):
+    name: Optional[str] = None
+    format: Optional[TournamentFormat] = None
+    start_date: Optional[datetime] = None
+    start_time: Optional[str] = None
+    team_size: Optional[int] = None
+    max_teams: Optional[int] = None
+    end_date: Optional[datetime] = None
 
-class Tournament(TournamentCreate):
+class Tournament(BaseModel):
     id: int
+    name: str
+    format: TournamentFormat
+    start_date: datetime
+    start_time: str | None
+    end_date: datetime | None
+    team_size: int | None
+    max_teams: int | None
+    current_teams: int = 0
     creator_id: int
     status: TournamentStatus
+    creator_username: str | None = None  # Add this field
 
     class Config:
         from_attributes = True
