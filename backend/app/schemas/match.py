@@ -1,16 +1,7 @@
 # app/schemas/match.py
 from pydantic import BaseModel
-from typing import Optional, List
-from .team import Team  # Make sure this exists with name and seed fields
-
-class TeamInMatch(BaseModel):
-    id: int
-    name: str
-    seed: int
-
-    class Config:
-        from_attributes = True
-
+from typing import Optional, List, Dict
+from .team_shared import TeamInMatch
 
 class MatchBase(BaseModel):
     tournament_id: int
@@ -21,7 +12,10 @@ class MatchBase(BaseModel):
     winner_id: Optional[int] = None
     loser_id: Optional[int] = None
     next_match_id: Optional[int] = None
-    is_losers_bracket: bool = False
+    bracket_position: Optional[int] = None
+    has_bye: bool = False
+    round_name: Optional[str] = None
+    is_completed: bool = False
 
 class MatchCreate(MatchBase):
     pass
@@ -31,7 +25,6 @@ class MatchUpdate(BaseModel):
 
 class Match(MatchBase):
     id: int
-    # Add these to include team details
     team1: Optional[TeamInMatch] = None
     team2: Optional[TeamInMatch] = None
     winner: Optional[TeamInMatch] = None
@@ -39,24 +32,33 @@ class Match(MatchBase):
 
     class Config:
         from_attributes = True
-        
-class DoubleBracketResponse(BaseModel):
-    tournament_id: int
-    winners_bracket: List[Match]  # This will now include team details
-    losers_bracket: List[Match]
-    finals: List[Match]
-    total_rounds: int
+
+# Separate schema for bracket responses
+class BracketMatch(Match):
+    # Include only the IDs of related matches to avoid recursion
+    previous_match_ids: List[int] = []
 
     class Config:
         from_attributes = True
 
-class MatchWithTeams(Match):
-    team1: "Team"
-    team2: "Team"
-    winner: Optional["Team"] = None
+class BracketRound(BaseModel):
+    round_number: int
+    round_name: str
+    matches: List[BracketMatch]
+
+class BracketResponse(BaseModel):
+    tournament_id: int
+    rounds: List[BracketRound]
+    total_rounds: int
+    
+    class Config:
+        from_attributes = True
+
+class TournamentBracketResponse(BaseModel):
+    tournament_id: int
+    winners_bracket: List[BracketMatch]
+    finals: List[BracketMatch]
+    total_rounds: int
 
     class Config:
-        from_attributes = True  # Changed from orm_mode = True
-
-from .team import Team  # This should be at the end to avoid circular imports
-MatchWithTeams.model_rebuild()
+        from_attributes = True

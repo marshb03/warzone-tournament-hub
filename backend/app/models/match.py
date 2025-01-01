@@ -1,5 +1,4 @@
-# app/models/match.py
-from sqlalchemy import Column, Integer, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, Integer, ForeignKey, UniqueConstraint, Boolean, String
 from sqlalchemy.orm import relationship, backref
 from app.models.base import Base
 
@@ -13,18 +12,23 @@ class Match(Base):
     team1_id = Column(Integer, ForeignKey("teams.id"), nullable=True)
     team2_id = Column(Integer, ForeignKey("teams.id"), nullable=True)
     winner_id = Column(Integer, ForeignKey("teams.id"), nullable=True)
-    loser_id = Column(Integer, ForeignKey("teams.id"), nullable=True)  # Add this
+    loser_id = Column(Integer, ForeignKey("teams.id"), nullable=True)
     next_match_id = Column(Integer, ForeignKey("matches.id"), nullable=True)
     
-    # Add relationship for loser
+    # New fields for bracket visualization
+    bracket_position = Column(Integer, nullable=True)
+    has_bye = Column(Boolean, default=False)
+    round_name = Column(String, nullable=True)
+    is_completed = Column(Boolean, default=False)
+    
+    # Relationships
     tournament = relationship("Tournament", back_populates="matches")
     team1 = relationship("Team", foreign_keys=[team1_id], back_populates="matches_as_team1")
     team2 = relationship("Team", foreign_keys=[team2_id], back_populates="matches_as_team2")
     winner = relationship("Team", foreign_keys=[winner_id], back_populates="matches_won")
-    loser = relationship("Team", foreign_keys=[loser_id], backref="matches_lost")  # Add this
+    loser = relationship("Team", foreign_keys=[loser_id], backref="matches_lost")
     next_match = relationship("Match", remote_side=[id], backref=backref("previous_matches", uselist=True))
 
-    # Ensure match_number is unique per round per tournament
     __table_args__ = (
         UniqueConstraint('tournament_id', 'round', 'match_number', 
                         name='unique_match_number_per_round'),

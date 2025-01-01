@@ -1,5 +1,6 @@
 # app/api/v1/endpoints/tournament.py
 
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
@@ -13,7 +14,8 @@ from app.models.match import Match
 from app.models.losers_match import LosersMatch
 from app.models.user import User
 from app.models.leaderboard import LeaderboardEntry
-from app.utils.bracket_generator import generate_bracket
+# Change this import to use new bracket generator
+from app.utils.BracketGenerator import generate_bracket, update_bracket
 
 router = APIRouter()
 
@@ -81,18 +83,20 @@ def start_tournament(
     if len(teams) < 2:
         raise HTTPException(status_code=400, detail="At least 2 teams are required to start a tournament")
     
-    # Generate bracket
-    generate_bracket(tournament_id, teams, db)
-    
-    # Update tournament status
-    tournament.status = TournamentStatus.ONGOING
-    db.commit()
-    db.refresh(tournament)
-    
-    # Refresh the tournament object to get updated matches
-    tournament = crud.tournament.get_tournament(db, tournament_id=tournament_id)
-    
-    return tournament
+    try:
+        # Use the new bracket generator
+        bracket_data = generate_bracket(tournament_id, teams, db)
+        
+        # Update tournament status is now handled inside generate_bracket()
+        tournament = crud.tournament.get_tournament(db, tournament_id=tournament_id)
+        
+        return tournament
+        
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to generate bracket: {str(e)}")
 
 @router.post("/{tournament_id}/reset", response_model=schemas.Tournament)
 def reset_tournament(

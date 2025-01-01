@@ -40,9 +40,14 @@ export const matchService = {
   },
 
   // Update a match in either bracket
-  async updateMatch(matchId, matchData) {
-    const response = await api.put(matchEndpoints.update(matchId), matchData);
-    return response.data;
+  async updateMatch(matchId, updateData) {
+    try {
+      const response = await api.put(`/api/v1/matches/${matchId}`, updateData);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating match:', error);
+      throw error;
+    }
   },
 
   // Specifically update a losers bracket match

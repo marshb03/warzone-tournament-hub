@@ -36,5 +36,34 @@ export const tournamentService = {
   async updateTournamentMatches(id, matchData) {
     const response = await api.put(config.endpoints.tournaments.matches(id), matchData);
     return response.data;
+  },
+
+  async updateMatch(matchId, matchData) {
+    const response = await api.put(config.endpoints.matches.update(matchId), matchData);
+    return response.data;
+  },
+
+  async updateLosersMatch(matchId, matchData) {
+    // Changed to use the correct endpoint
+    const response = await api.put(config.endpoints.matches.updateLosers(matchId), matchData);
+    return response.data;
+},
+
+async getTournamentMatches(id) {
+    try {
+        const winnersResponse = await api.get(config.endpoints.matches.tournament(id));
+        // Updated to use correct endpoint
+        const losersResponse = await api.get(config.endpoints.matches.losersMatches.list(id));
+
+        return {
+            winners_bracket: winnersResponse.data.winners_bracket || [],
+            losers_bracket: losersResponse.data || [],
+            finals: winnersResponse.data.finals || [],
+            total_rounds: winnersResponse.data.total_rounds
+        };
+    } catch (error) {
+        console.error('Error fetching tournament matches:', error);
+        throw error;
+    }
   }
 };

@@ -7,6 +7,8 @@ from app.api import deps
 from app.models.tournament import TournamentFormat
 from app.models.match import Match
 from app.models.losers_match import LosersMatch
+from app.utils.BracketGenerator import update_bracket
+from app.schemas.match import BracketMatch, TournamentBracketResponse
 
 router = APIRouter()
 
@@ -32,65 +34,54 @@ def read_match(match_id: int, db: Session = Depends(deps.get_db)):
     
     raise HTTPException(status_code=404, detail="Match not found")
 
-@router.get("/tournament/{tournament_id}", response_model=Union[List[schemas.Match], schemas.DoubleBracketResponse])
+@router.get("/tournament/{tournament_id}", response_model=schemas.TournamentBracketResponse)
 def read_matches_by_tournament(tournament_id: int, db: Session = Depends(deps.get_db)):
+    """Get all winners bracket and championship matches for a tournament."""
     tournament = crud.tournament.get_tournament(db, tournament_id=tournament_id)
     if not tournament:
         raise HTTPException(status_code=404, detail="Tournament not found")
     
-    if tournament.format == TournamentFormat.SINGLE_ELIMINATION:
-        matches = db.query(Match)\
-            .options(
-                joinedload(Match.team1),
-                joinedload(Match.team2),
-                joinedload(Match.winner),
-                joinedload(Match.loser)
-            )\
-            .filter(Match.tournament_id == tournament_id)\
-            .all()
-        return matches
-    else:
-        winners_matches = db.query(Match)\
-            .options(
-                joinedload(Match.team1),
-                joinedload(Match.team2),
-                joinedload(Match.winner),
-                joinedload(Match.loser)
-            )\
-            .filter(Match.tournament_id == tournament_id)\
-            .all()
-            
-        losers_matches = db.query(LosersMatch)\
-            .options(
-                joinedload(LosersMatch.team1),
-                joinedload(LosersMatch.team2),
-                joinedload(LosersMatch.winner)
-            )\
-            .filter(LosersMatch.tournament_id == tournament_id)\
-            .all()
-            
-        finals_matches = [m for m in winners_matches if m.round >= max(m.round for m in winners_matches) - 1]
-        regular_winners = [m for m in winners_matches if m not in finals_matches]
-        
-        return schemas.DoubleBracketResponse(
-            tournament_id=tournament_id,
-            winners_bracket=regular_winners,
-            losers_bracket=losers_matches,
-            finals=finals_matches,
-            total_rounds=max(match.round for match in winners_matches) if winners_matches else 0
-        )
+    # Get all matches for the tournament
+    matches = db.query(Match)\
+        .options(
+            joinedload(Match.team1),
+            joinedload(Match.team2),
+            joinedload(Match.winner),
+            joinedload(Match.loser)
+        )\
+        .filter(Match.tournament_id == tournament_id)\
+        .all()
+    
+    # Separate matches into winners bracket and championship matches
+    winners_bracket = [m for m in matches if m.round < 98]
+    finals = [m for m in matches if m.round >= 98]
+    
+    # Calculate total rounds (excluding championship rounds)
+    total_rounds = max((m.round for m in winners_bracket), default=0)
+
+    return schemas.TournamentBracketResponse(
+        tournament_id=tournament_id,
+        winners_bracket=winners_bracket,
+        finals=finals,
+        total_rounds=total_rounds
+    )
 
 @router.put("/{match_id}", response_model=Union[schemas.Match, schemas.LosersMatch])
 def update_match(match_id: int, match_update: schemas.MatchUpdate, db: Session = Depends(deps.get_db)):
     # Try to update winners bracket match
     db_match = crud.match.get_match(db, match_id=match_id)
     if db_match is not None:
-        updated_match = crud.match.update_match(db, match_id=match_id, match_update=match_update)
-        if updated_match is None:
-            raise HTTPException(status_code=404, detail="Match not found")
-        return updated_match
+        try:
+            # Use the new update_bracket function instead of crud.match.update_match
+            updated_match = update_bracket(match_id, match_update.winner_id, db)
+            return updated_match
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(status_code=500, detail=str(e))
     
-    # Try to update losers bracket match
+    # Try to update losers bracket match (keep existing logic for now)
     db_losers_match = crud.losers_match.get_match(db, match_id=match_id)
     if db_losers_match is not None:
         updated_match = crud.losers_match.update_match(db, match_id=match_id, match_update=match_update)

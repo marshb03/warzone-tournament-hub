@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import List, Dict, Optional
 from sqlalchemy.orm import Session
 from app.models.tournament import Tournament
 from app.models.losers_match import LosersMatch
@@ -18,29 +18,25 @@ def calculate_losers_bracket_structure(num_teams: int) -> Dict[int, Dict]:
     
     structure = {}
     
-    # Calculate Round 1 matches
-    if num_teams == 4:
-        r1_matches = 2
-    elif num_teams in [8, 16]:
-        r1_matches = num_teams // 4
-    elif num_teams == 32:
+    # Round 1 matches
+    if num_teams == 32:
         r1_matches = 8
-    elif num_teams in [5, 7, 9, 13, 17, 25]:
-        r1_matches = 1
-    elif num_teams in [6, 10, 14, 18, 26]:
-        r1_matches = 2
-    elif num_teams in [11, 15, 19, 27]:
-        r1_matches = 3
-    elif num_teams in [12, 20, 28]:
+    elif num_teams == 16:
         r1_matches = 4
-    elif num_teams in [21, 29]:
-        r1_matches = 5
-    elif num_teams in [22, 30]:
-        r1_matches = 6
-    elif num_teams in [23, 31]:
-        r1_matches = 7
-    else:  # num_teams == 24
+    elif num_teams == 8:
+        r1_matches = 2
+    elif num_teams == 4:
+        r1_matches = 1
+    elif num_teams >= 25:  # 25-31 teams
         r1_matches = 8
+    elif num_teams >= 17:  # 17-24 teams
+        r1_matches = num_teams - 16
+    elif num_teams >= 13:  # 13-16 teams
+        r1_matches = 4
+    elif num_teams >= 9:   # 9-12 teams
+        r1_matches = num_teams - 8
+    else:                  # 5-8 teams
+        r1_matches = num_teams - 4
 
     structure[1] = {
         'num_matches': r1_matches,
@@ -48,17 +44,15 @@ def calculate_losers_bracket_structure(num_teams: int) -> Dict[int, Dict]:
         'receives_losers_from': 1
     }
 
-    # Calculate Round 2 matches
-    if num_teams <= 6:
-        r2_matches = 1
-    elif num_teams <= 8:
-        r2_matches = 2
-    elif num_teams <= 12:
-        r2_matches = 2
-    elif num_teams <= 24:
-        r2_matches = 4
-    else:  # 25-32 teams
+    # Round 2 matches
+    if num_teams >= 25:    # 25-32 teams
         r2_matches = 8
+    elif num_teams >= 16:  # 16-24 teams
+        r2_matches = 4
+    elif num_teams >= 9:   # 9-15 teams
+        r2_matches = 2
+    else:                  # 4-8 teams
+        r2_matches = 1
 
     structure[2] = {
         'num_matches': r2_matches,
@@ -66,16 +60,19 @@ def calculate_losers_bracket_structure(num_teams: int) -> Dict[int, Dict]:
         'receives_losers_from': 2
     }
 
-    # Calculate Round 3 matches
+    # Return early for 4-team tournaments
     if num_teams == 4:
-        # 4 teams only has 2 rounds
         return structure
-    elif num_teams <= 8:
-        r3_matches = 1
-    elif num_teams <= 16:
-        r3_matches = 2
-    elif num_teams <= 32:
+
+    # Round 3 matches
+    if num_teams >= 25:    # 25-32 teams
         r3_matches = 4
+    elif num_teams >= 16:  # 16-24 teams
+        r3_matches = 2
+    elif num_teams >= 9:   # 9-15 teams
+        r3_matches = 2
+    else:                  # 5-8 teams
+        r3_matches = 1
 
     structure[3] = {
         'num_matches': r3_matches,
@@ -83,27 +80,19 @@ def calculate_losers_bracket_structure(num_teams: int) -> Dict[int, Dict]:
         'receives_losers_from': 3
     }
 
-    # Calculate Round 4 matches
+    # Return early for 5-6 team tournaments
     if num_teams <= 6:
-        # 5-6 teams only has 3 rounds
         return structure
-    elif num_teams == 7:
-        structure[4] = {
-            'num_matches': 1,
-            'start_match_num': 101,
-            'receives_losers_from': 4
-        }
-        return structure  # 7 teams stops at round 4
-    
-    # Continue with previous logic for 8+ teams...
-    if num_teams <= 8:
-        r4_matches = 1
-    elif num_teams in [9, 10, 11, 12]:
-        r4_matches = 1
-    elif num_teams <= 16:
-        r4_matches = 2
-    elif num_teams <= 32:
+
+    # Round 4 matches
+    if num_teams >= 25:    # 25-32 teams
         r4_matches = 4
+    elif num_teams >= 16:  # 16-24 teams
+        r4_matches = 2
+    elif num_teams >= 9:   # 9-15 teams
+        r4_matches = 1
+    else:                  # 7-8 teams
+        r4_matches = 1
 
     structure[4] = {
         'num_matches': r4_matches,
@@ -111,35 +100,601 @@ def calculate_losers_bracket_structure(num_teams: int) -> Dict[int, Dict]:
         'receives_losers_from': 4
     }
 
-    # Calculate Round 5 matches only for 9+ teams
-    if num_teams >= 9:
-        if num_teams in [9, 10, 11, 12]:
-            r5_matches = 1
-        elif num_teams in [13, 14, 15, 16]:
-            r5_matches = 1
-        elif num_teams <= 32:
-            r5_matches = 2
+    # Return early for 7-8 team tournaments
+    if num_teams <= 8:
+        return structure
 
-        structure[5] = {
-            'num_matches': r5_matches,
-            'start_match_num': 101,
-            'receives_losers_from': 5
-        }
+    # Round 5 matches
+    if num_teams >= 25:    # 25-32 teams
+        r5_matches = 2
+    elif num_teams >= 16:  # 16-24 teams
+        r5_matches = 1
+    else:                  # 9-15 teams
+        r5_matches = 1
+
+    structure[5] = {
+        'num_matches': r5_matches,
+        'start_match_num': 101,
+        'receives_losers_from': 5
+    }
+
+    # Return early for 9-15 team tournaments
+    if num_teams < 16:
+        return structure
+
+    # Round 6 (16+ teams)
+    structure[6] = {
+        'num_matches': 1,
+        'start_match_num': 101,
+        'receives_losers_from': 6
+    }
+
+    # Return early for 16-24 team tournaments
+    if num_teams < 25:
+        return structure
+
+    # Round 7 (25+ teams)
+    structure[7] = {
+        'num_matches': 1,
+        'start_match_num': 101,
+        'receives_losers_from': 7
+    }
+
+    # Round 8 (25+ teams)
+    structure[8] = {
+        'num_matches': 1,
+        'start_match_num': 101,
+        'receives_losers_from': 8
+    }
 
     return structure
 
+def get_base_sources() -> dict:
+    """Return base empty source tracking dictionary."""
+    return {
+        'team1_from_winners': False,
+        'team1_winners_round': None,
+        'team1_winners_match_number': None,
+        'team2_from_winners': False,
+        'team2_winners_round': None,
+        'team2_winners_match_number': None
+    }
+
+def calculate_power_2_sources(round_num: int, match_index: int, num_teams: int) -> dict:
+    """
+    Calculate source tracking for 32, 16, 8, 4 team tournaments.
+    
+    Args:
+        round_num: Current round in losers bracket (1-8)
+        match_index: Index within current round (0-based)
+        num_teams: Number of teams (32, 16, 8, or 4)
+    """
+    sources = get_base_sources()
+    winners_r1_matches = num_teams // 2  # Number of R1 matches in winners bracket
+
+    if round_num == 1:
+        # First round gets losers from Winners R1
+        sources.update({
+            'team1_from_winners': True,
+            'team1_winners_round': 1,
+            'team1_winners_match_number': match_index + 1,
+            'team2_from_winners': True,
+            'team2_winners_round': 1,
+            'team2_winners_match_number': winners_r1_matches - match_index  # Counts down from total matches
+        })
+    
+    elif round_num == 2:
+        # Second round gets winners from R1 losers and losers from Winners R2
+        sources.update({
+            'team1_from_winners': False,  # From losers bracket R1
+            'team2_from_winners': True,   # From winners bracket R2
+            'team2_winners_round': 2,
+            'team2_winners_match_number': match_index + 1
+        })
+    
+    elif round_num == 4 and num_teams >= 16:
+        # Round 4 gets losers from Winners R3
+        sources.update({
+            'team1_from_winners': False,
+            'team2_from_winners': True,
+            'team2_winners_round': 3,
+            'team2_winners_match_number': match_index + 1
+        })
+    
+    elif round_num == 6 and num_teams >= 16:
+        # Round 6 gets losers from Winners R4
+        sources.update({
+            'team1_from_winners': False,
+            'team2_from_winners': True,
+            'team2_winners_round': 4,
+            'team2_winners_match_number': match_index + 1
+        })
+    
+    elif round_num == 8 and num_teams == 32:
+        # Round 8 (only in 32-team tournaments) gets losers from Winners R5
+        sources.update({
+            'team1_from_winners': False,
+            'team2_from_winners': True,
+            'team2_winners_round': 5,
+            'team2_winners_match_number': match_index + 1
+        })
+    
+    return sources
+
+def calculate_25_31_sources(round_num: int, match_index: int, num_teams: int) -> dict:
+    """
+    Calculate source tracking for 25-31 team tournaments.
+    
+    Args:
+        round_num: Current round in losers bracket (1-8)
+        match_index: Index within current round (0-based)
+        num_teams: Number of teams (25-31)
+    """
+    sources = get_base_sources()
+    num_byes = 32 - num_teams  # Calculate number of byes
+
+    if round_num == 1:
+        # First round matches are between R1 losers
+        sources.update({
+            'team1_from_winners': True,
+            'team1_winners_round': 1,
+            'team1_winners_match_number': match_index + 8,  # Matches 8-15
+            'team2_from_winners': True,
+            'team2_winners_round': 1,
+            'team2_winners_match_number': match_index + 9   # Matches 9-16
+        })
+    
+    elif round_num == 2:
+        if match_index < num_byes:
+            # First matches get R1 losers with byes
+            sources.update({
+                'team1_from_winners': True,
+                'team1_winners_round': 1,
+                'team1_winners_match_number': match_index + 1
+            })
+        sources.update({
+            'team2_from_winners': True,
+            'team2_winners_round': 2,
+            'team2_winners_match_number': match_index + 1
+        })
+    
+    elif round_num == 4:
+        # Round 4 gets losers from Winners R3
+        sources.update({
+            'team1_from_winners': False,
+            'team2_from_winners': True,
+            'team2_winners_round': 3,
+            'team2_winners_match_number': match_index + 1
+        })
+    
+    elif round_num == 6:
+        # Round 6 gets losers from Winners R4
+        sources.update({
+            'team1_from_winners': False,
+            'team2_from_winners': True,
+            'team2_winners_round': 4,
+            'team2_winners_match_number': match_index + 1
+        })
+    
+    elif round_num == 8:
+        # Round 8 gets losers from Winners R5
+        sources.update({
+            'team1_from_winners': False,
+            'team2_from_winners': True,
+            'team2_winners_round': 5,
+            'team2_winners_match_number': match_index + 1
+        })
+
+    return sources
+
+def calculate_17_24_sources(round_num: int, match_index: int, num_teams: int) -> dict:
+    """
+    Calculate source tracking for 17-24 team tournaments.
+    
+    Args:
+        round_num: Current round in losers bracket (1-7)
+        match_index: Index within current round (0-based)
+        num_teams: Number of teams (17-24)
+    """
+    sources = get_base_sources()
+
+    if round_num == 1:
+        # First round matches (varies based on size)
+        if num_teams == 24:
+            # 24 teams has 8 R1 matches
+            sources.update({
+                'team1_from_winners': True,
+                'team1_winners_round': 1,
+                'team1_winners_match_number': match_index + 1,
+                'team2_from_winners': True,
+                'team2_winners_round': 2,
+                'team2_winners_match_number': 8 - match_index  # Counts down 8->1
+            })
+        else:
+            # 17-23 teams
+            sources.update({
+                'team1_from_winners': True,
+                'team1_winners_round': 1,
+                'team1_winners_match_number': match_index + 1,
+                'team2_from_winners': True,
+                'team2_winners_round': 2,
+                'team2_winners_match_number': match_index + 1
+            })
+    
+    elif round_num == 2:
+        # Second round gets mix of R1 winners and R2 losers
+        sources.update({
+            'team1_from_winners': False,  # From losers R1
+            'team2_from_winners': True,   # From winners R2
+            'team2_winners_round': 2,
+            'team2_winners_match_number': match_index + 1
+        })
+    
+    elif round_num == 4:
+        # Round 4 gets losers from Winners R3
+        sources.update({
+            'team1_from_winners': False,
+            'team2_from_winners': True,
+            'team2_winners_round': 3,
+            'team2_winners_match_number': match_index + 1
+        })
+    
+    elif round_num == 6:
+        # Round 6 gets losers from Winners R4
+        sources.update({
+            'team1_from_winners': False,
+            'team2_from_winners': True,
+            'team2_winners_round': 4,
+            'team2_winners_match_number': match_index + 1
+        })
+
+    return sources
+
+def calculate_13_15_sources(round_num: int, match_index: int, num_teams: int) -> dict:
+    """
+    Calculate source tracking for 13-15 team tournaments.
+    
+    Args:
+        round_num: Current round in losers bracket (1-6)
+        match_index: Index within current round (0-based)
+        num_teams: Number of teams (13-15)
+    """
+    sources = get_base_sources()
+    winners_r1_matches = num_teams - 8  # Calculate R1 matches for non-power-2 sizes
+
+    if round_num == 1:
+        # First round matches between Winners R1 losers
+        sources.update({
+            'team1_from_winners': True,
+            'team1_winners_round': 1,
+            'team1_winners_match_number': match_index + 1,
+            'team2_from_winners': True,
+            'team2_winners_round': 1,
+            'team2_winners_match_number': winners_r1_matches - match_index  # Counts down from total matches
+        })
+    
+    elif round_num == 2:
+        # Second round gets winners from R1 losers and losers from Winners R2
+        sources.update({
+            'team1_from_winners': False,  # From losers R1
+            'team2_from_winners': True,   # From winners R2
+            'team2_winners_round': 2,
+            'team2_winners_match_number': match_index + 1
+        })
+    
+    elif round_num == 4:
+        # Round 4 gets losers from Winners R3
+        sources.update({
+            'team1_from_winners': False,
+            'team2_from_winners': True,
+            'team2_winners_round': 3,
+            'team2_winners_match_number': match_index + 1
+        })
+
+    return sources
+
+def calculate_9_12_sources(round_num: int, match_index: int, num_teams: int) -> dict:
+    """
+    Calculate source tracking for 9-12 team tournaments.
+    
+    Args:
+        round_num: Current round in losers bracket (1-4)
+        match_index: Index within current round (0-based)
+        num_teams: Number of teams (9-12)
+    """
+    sources = get_base_sources()
+
+    if round_num == 1:
+        if num_teams == 9:
+            # Single R1 match: W-R1M1 vs W-R2M3
+            sources.update({
+                'team1_from_winners': True,
+                'team1_winners_round': 1,
+                'team1_winners_match_number': 1,
+                'team2_from_winners': True,
+                'team2_winners_round': 2,
+                'team2_winners_match_number': 3
+            })
+        elif num_teams == 10:
+            # Two R1 matches with specific pairings
+            match_pairs = [(1,2), (2,1)]  # [W-R1M#, W-R2M#]
+            if match_index < len(match_pairs):
+                m1, m2 = match_pairs[match_index]
+                sources.update({
+                    'team1_from_winners': True,
+                    'team1_winners_round': 1,
+                    'team1_winners_match_number': m1,
+                    'team2_from_winners': True,
+                    'team2_winners_round': 2,
+                    'team2_winners_match_number': m2
+                })
+        elif num_teams == 11:
+            # Three R1 matches with specific pairings
+            match_pairs = [(1,3), (2,2), (3,1)]
+            if match_index < len(match_pairs):
+                m1, m2 = match_pairs[match_index]
+                sources.update({
+                    'team1_from_winners': True,
+                    'team1_winners_round': 1,
+                    'team1_winners_match_number': m1,
+                    'team2_from_winners': True,
+                    'team2_winners_round': 2,
+                    'team2_winners_match_number': m2
+                })
+        else:  # 12 teams
+            # Four R1 matches
+            sources.update({
+                'team1_from_winners': True,
+                'team1_winners_round': 1,
+                'team1_winners_match_number': match_index + 1,
+                'team2_from_winners': True,
+                'team2_winners_round': 2,
+                'team2_winners_match_number': 4 - match_index
+            })
+    
+    elif round_num == 2:
+        if num_teams == 9:
+            if match_index == 0:
+                # L-R1M101 vs W-R2M2
+                sources.update({
+                    'team1_from_winners': False,
+                    'team2_from_winners': True,
+                    'team2_winners_round': 2,
+                    'team2_winners_match_number': 2
+                })
+            else:
+                # W-R2M1 vs W-R2M4
+                sources.update({
+                    'team1_from_winners': True,
+                    'team1_winners_round': 2,
+                    'team1_winners_match_number': 1,
+                    'team2_from_winners': True,
+                    'team2_winners_round': 2,
+                    'team2_winners_match_number': 4
+                })
+        elif num_teams == 10:
+            # Two R2 matches: L-R1 vs W-R2
+            sources.update({
+                'team1_from_winners': False,
+                'team2_from_winners': True,
+                'team2_winners_round': 2,
+                'team2_winners_match_number': 4 - match_index
+            })
+        elif num_teams == 11:
+            if match_index == 0:
+                # First match: L-R1M101 vs W-R2M4
+                sources.update({
+                    'team1_from_winners': False,
+                    'team2_from_winners': True,
+                    'team2_winners_round': 2,
+                    'team2_winners_match_number': 4
+                })
+            else:
+                # Second match: L-R1M102 vs L-R1M103
+                sources.update({
+                    'team1_from_winners': False,
+                    'team2_from_winners': False
+                })
+        else:  # 12 teams
+            # Both matches pair R1 losers
+            sources.update({
+                'team1_from_winners': False,
+                'team2_from_winners': False
+            })
+    
+    elif round_num == 3:
+        # Round 3 matches pair R2 winners
+        sources.update({
+            'team1_from_winners': False,
+            'team2_from_winners': False
+        })
+    
+    elif round_num == 4:
+        # Final losers match
+        sources.update({
+            'team1_from_winners': False,
+            'team2_from_winners': True,
+            'team2_winners_round': 3,
+            'team2_winners_match_number': match_index + 1
+        })
+
+    return sources
+
+def calculate_5_8_sources(round_num: int, match_index: int, num_teams: int) -> dict:
+    """
+    Calculate source tracking for 5-8 team tournaments.
+    
+    Args:
+        round_num: Current round in losers bracket (1-4)
+        match_index: Index within current round (0-based)
+        num_teams: Number of teams (5-8)
+    """
+    sources = get_base_sources()
+
+    if round_num == 1:
+        if num_teams == 5:
+            # Single R1 match: W-R1M1 vs W-R2M2
+            sources.update({
+                'team1_from_winners': True,
+                'team1_winners_round': 1,
+                'team1_winners_match_number': 1,
+                'team2_from_winners': True,
+                'team2_winners_round': 2,
+                'team2_winners_match_number': 2
+            })
+        elif num_teams == 6:
+            # Two R1 matches pairing winners bracket teams
+            match_pairs = [(1,2), (2,1)]  # [W-R1M#, W-R2M#]
+            if match_index < len(match_pairs):
+                m1, m2 = match_pairs[match_index]
+                sources.update({
+                    'team1_from_winners': True,
+                    'team1_winners_round': 1,
+                    'team1_winners_match_number': m1,
+                    'team2_from_winners': True,
+                    'team2_winners_round': 2,
+                    'team2_winners_match_number': m2
+                })
+        elif num_teams == 7:
+            # Single R1 match between first two winners losers
+            sources.update({
+                'team1_from_winners': True,
+                'team1_winners_round': 1,
+                'team1_winners_match_number': 1,
+                'team2_from_winners': True,
+                'team2_winners_round': 1,
+                'team2_winners_match_number': 2
+            })
+        else:  # 8 teams
+            # Two R1 matches pairing highest vs lowest seeds
+            sources.update({
+                'team1_from_winners': True,
+                'team1_winners_round': 1,
+                'team1_winners_match_number': match_index + 1,
+                'team2_from_winners': True,
+                'team2_winners_round': 1,
+                'team2_winners_match_number': 4 - match_index
+            })
+    
+    elif round_num == 2:
+        if num_teams <= 6:
+            # Single R2 match
+            if num_teams == 5:
+                # L-R1M101 vs W-R2M1
+                sources.update({
+                    'team1_from_winners': False,
+                    'team2_from_winners': True,
+                    'team2_winners_round': 2,
+                    'team2_winners_match_number': 1
+                })
+            else:  # 6 teams
+                # L-R1M101 vs L-R1M102
+                sources.update({
+                    'team1_from_winners': False,
+                    'team2_from_winners': False
+                })
+        else:  # 7-8 teams
+            if num_teams == 7:
+                if match_index == 0:
+                    # First match: L-R1M101 vs W-R2M1
+                    sources.update({
+                        'team1_from_winners': False,
+                        'team2_from_winners': True,
+                        'team2_winners_round': 2,
+                        'team2_winners_match_number': 1
+                    })
+                else:
+                    # Second match: W-R2M2 vs W-R1M3
+                    sources.update({
+                        'team1_from_winners': True,
+                        'team1_winners_round': 2,
+                        'team1_winners_match_number': 2,
+                        'team2_from_winners': True,
+                        'team2_winners_round': 1,
+                        'team2_winners_match_number': 3
+                    })
+            else:  # 8 teams
+                # Two R2 matches pairing R1 losers with R2 losers
+                sources.update({
+                    'team1_from_winners': False,
+                    'team2_from_winners': True,
+                    'team2_winners_round': 2,
+                    'team2_winners_match_number': match_index + 1
+                })
+    
+    elif round_num == 3:
+        # R3 matches pair R2 winners
+        sources.update({
+            'team1_from_winners': False,
+            'team2_from_winners': False
+        })
+    
+    elif round_num == 4:
+        # Only 7-8 team tournaments have R4
+        if num_teams >= 7:
+            sources.update({
+                'team1_from_winners': False,
+                'team2_from_winners': True,
+                'team2_winners_round': 3,
+                'team2_winners_match_number': match_index + 1
+            })
+
+    return sources
+
+def calculate_match_sources(tournament_id: int, num_teams: int, round_num: int, match_num: int) -> dict:
+    """
+    Calculate source tracking info for a specific match in the losers bracket.
+    Routes to appropriate calculator based on tournament size.
+    
+    Args:
+        tournament_id: ID of the tournament
+        num_teams: Total number of teams in tournament (4-32)
+        round_num: Current round in losers bracket (1-8)
+        match_num: Match number (101+)
+    
+    Returns:
+        dict: Source tracking information for both teams in the match
+    """
+    # Validate inputs
+    if not 4 <= num_teams <= 32:
+        raise ValueError("Number of teams must be between 4 and 32")
+    if round_num < 1:
+        raise ValueError("Round number must be positive")
+    if match_num < 101:
+        raise ValueError("Match number must be 101 or greater")
+
+    # Convert match number to 0-based index
+    match_index = match_num - 101
+
+    # Route to appropriate calculator based on tournament size
+    if num_teams == 32 or num_teams == 16 or num_teams == 8 or num_teams == 4:
+        # Power of 2 sizes
+        return calculate_power_2_sources(round_num, match_index, num_teams)
+    elif 25 <= num_teams <= 31:
+        return calculate_25_31_sources(round_num, match_index, num_teams)
+    elif 17 <= num_teams <= 24:
+        return calculate_17_24_sources(round_num, match_index, num_teams)
+    elif 13 <= num_teams <= 16:
+        return calculate_13_15_sources(round_num, match_index, num_teams)
+    elif 9 <= num_teams <= 12:
+        return calculate_9_12_sources(round_num, match_index, num_teams)
+    else:  # 5-8 teams
+        return calculate_5_8_sources(round_num, match_index, num_teams)
+
 def generate_losers_bracket(tournament_id: int, num_teams: int, db: Session) -> List[LosersMatch]:
-    """Generate complete losers bracket with all matches and links."""
     structure = calculate_losers_bracket_structure(num_teams)
     matches = []
     matches_by_round = {}
 
-    # First pass: Create all matches (keep your existing code)
     for round_num in sorted(structure.keys()):
         round_matches = []
         round_info = structure[round_num]
         
         for i in range(round_info['num_matches']):
+            # Get source tracking info
+            match_num = round_info['start_match_num'] + i
+            sources = calculate_match_sources(tournament_id, num_teams, round_num, match_num)
+            
             match = LosersMatch(
                 tournament_id=tournament_id,
                 round=round_num,
@@ -147,8 +702,10 @@ def generate_losers_bracket(tournament_id: int, num_teams: int, db: Session) -> 
                 team1_id=None,
                 team2_id=None,
                 winner_id=None,
-                next_match_id=None
+                next_match_id=None,
+                **sources  # Unpack all source tracking fields
             )
+            
             db.add(match)
             round_matches.append(match)
         
@@ -268,19 +825,10 @@ def generate_losers_bracket(tournament_id: int, num_teams: int, db: Session) -> 
     db.commit()
     return matches
 
-def handle_power_2_teams(tournament_id: int, winners_match_num: int, winners_round: int, loser_id: int, db: Session) -> None:
+def handle_power_2_teams(tournament_id: int, winners_match_num: int, winners_round: int, loser_id: int, db: Session) -> Optional[LosersMatch]:
     """
     Handle loser placement for tournaments with team counts that are powers of 2 (32, 16, 8, 4).
-    
-    Round 1 pattern:
-    32 teams: 8 matches (M101-108)
-    16 teams: 4 matches (M101-104)
-    8 teams: 2 matches (M101-102)
-    4 teams: 1 match (M101)
-    
-    For each size:
-    - First half of matches go to team1 spots
-    - Second half of matches go to team2 spots in reverse order
+    Now returns the match object for source tracking.
     """
     # Get tournament to determine number of teams
     tournament = db.query(Tournament).filter(Tournament.id == tournament_id).first()
@@ -303,6 +851,7 @@ def handle_power_2_teams(tournament_id: int, winners_match_num: int, winners_rou
             
             if losers_match:
                 losers_match.team1_id = loser_id
+                return losers_match
         else:
             # Second half go to team2 spots in reverse order
             l_r1_match = 100 + (2 * r1_matches + 1 - winners_match_num)
@@ -316,7 +865,8 @@ def handle_power_2_teams(tournament_id: int, winners_match_num: int, winners_rou
             
             if losers_match:
                 losers_match.team2_id = loser_id
-
+                return losers_match
+    
     elif winners_round == 2:
         # Calculate highest match number for this bracket size
         max_match = 100 + r1_matches
@@ -337,6 +887,9 @@ def handle_power_2_teams(tournament_id: int, winners_match_num: int, winners_rou
                 losers_match.team1_id = loser_id
             else:
                 losers_match.team2_id = loser_id
+            return losers_match
+    
+    return None
 
 def handle_25_31_team_losers(tournament_id: int, winners_match_num: int, winners_round: int, loser_id: int, db: Session) -> None:
     """
@@ -1164,7 +1717,22 @@ def handle_5_7_team_losers(tournament_id: int, winners_match_num: int, winners_r
 def add_loser_to_bracket(tournament_id: int, loser_id: int, winners_match_num: int, winners_round: int, num_teams: int, db: Session) -> None:
     """
     Place team that lost in winners bracket into appropriate losers match.
+    Now includes source tracking for where teams come from.
     """
+    def update_source_info(match: LosersMatch, is_team1: bool):
+        """Helper function to update source tracking information"""
+        if is_team1:
+            match.team1_from_winners = True
+            match.team1_winners_round = winners_round
+            match.team1_winners_match_number = winners_match_num
+            match.team1_losers_match_id = None
+        else:
+            match.team2_from_winners = True
+            match.team2_winners_round = winners_round
+            match.team2_winners_match_number = winners_match_num
+            match.team2_losers_match_id = None
+        db.flush()
+
     # Calculate tournament structure
     next_power = 2 ** ceil(log2(num_teams))
     num_byes = next_power - num_teams
@@ -1173,25 +1741,46 @@ def add_loser_to_bracket(tournament_id: int, loser_id: int, winners_match_num: i
     print(f"Debug - Total teams: {num_teams}, Next power: {next_power}, Byes: {num_byes}")
     
     if num_teams in [32, 16, 8, 4]:
-        handle_power_2_teams(tournament_id, winners_match_num, winners_round, loser_id, db)
+        match = handle_power_2_teams(tournament_id, winners_match_num, winners_round, loser_id, db)
+        if match:
+            is_team1 = match.team1_id == loser_id
+            update_source_info(match, is_team1)
         
     elif 25 <= num_teams <= 31:
-        handle_25_31_team_losers(tournament_id, winners_match_num, winners_round, loser_id, db)
+        match = handle_25_31_team_losers(tournament_id, winners_match_num, winners_round, loser_id, db)
+        if match:
+            is_team1 = match.team1_id == loser_id
+            update_source_info(match, is_team1)
     
     elif num_teams in [24, 12]:
-        handle_24_12_team_losers(tournament_id, winners_match_num, winners_round, loser_id, db)
+        match = handle_24_12_team_losers(tournament_id, winners_match_num, winners_round, loser_id, db)
+        if match:
+            is_team1 = match.team1_id == loser_id
+            update_source_info(match, is_team1)
     
     elif 17 <= num_teams <= 23:
-        handle_17_23_team_losers(tournament_id, winners_match_num, winners_round, loser_id, total_r1_matches, db)
+        match = handle_17_23_team_losers(tournament_id, winners_match_num, winners_round, loser_id, total_r1_matches, db)
+        if match:
+            is_team1 = match.team1_id == loser_id
+            update_source_info(match, is_team1)
     
     elif 13 <= num_teams <= 16:
-        handle_13_16_team_losers(tournament_id, winners_match_num, winners_round, loser_id, db)
+        match = handle_13_16_team_losers(tournament_id, winners_match_num, winners_round, loser_id, db)
+        if match:
+            is_team1 = match.team1_id == loser_id
+            update_source_info(match, is_team1)
     
-    elif 9 <= num_teams <= 11: 
-        handle_9_11_team_losers(tournament_id, winners_match_num, winners_round, loser_id, db)
+    elif 9 <= num_teams <= 11:
+        match = handle_9_11_team_losers(tournament_id, winners_match_num, winners_round, loser_id, db)
+        if match:
+            is_team1 = match.team1_id == loser_id
+            update_source_info(match, is_team1)
     
-    elif 5 <= num_teams <= 7: 
-        handle_5_7_team_losers(tournament_id, winners_match_num, winners_round, loser_id, db)
+    elif 5 <= num_teams <= 7:
+        match = handle_5_7_team_losers(tournament_id, winners_match_num, winners_round, loser_id, db)
+        if match:
+            is_team1 = match.team1_id == loser_id
+            update_source_info(match, is_team1)
     
     else:
         raise ValueError(f"Invalid number of teams: {num_teams}. Must be between 4 and 32.")
@@ -1200,44 +1789,32 @@ def add_loser_to_bracket(tournament_id: int, loser_id: int, winners_match_num: i
     
 def update_losers_bracket(match_id: int, winner_id: int, db: Session) -> LosersMatch:
     """
-    Handle updates for losers bracket matches.
-    For Round 2 winners, pair lowest with highest match numbers for Round 3.
+    Handle updates for losers bracket matches and track progression source.
     """
-    losers_match = db.query(LosersMatch).filter(LosersMatch.id == match_id).first()
-    if not losers_match:
-        raise HTTPException(status_code=404, detail="Losers bracket match not found")
+    match = db.query(LosersMatch).filter(LosersMatch.id == match_id).first()
+    if not match:
+        raise HTTPException(status_code=404, detail="Match not found")
 
-    if winner_id not in [losers_match.team1_id, losers_match.team2_id]:
-        raise HTTPException(status_code=400, detail="Winner must be one of the teams in the match")
-
-    # Set winner in current match
-    losers_match.winner_id = winner_id
+    match.winner_id = winner_id
     db.flush()
 
-    # Handle progression
-    if losers_match.next_match_id:
-        next_match = db.query(LosersMatch).filter(LosersMatch.id == losers_match.next_match_id).first()
+    # Handle progression with source tracking
+    if match.next_match_id:
+        next_match = db.query(LosersMatch).filter(LosersMatch.id == match.next_match_id).first()
         if next_match:
-            if losers_match.round == 2:
-                # For round 2 winners, place based on match number (low vs high pairing)
-                total_r2_matches = db.query(LosersMatch)\
-                    .filter(
-                        LosersMatch.tournament_id == losers_match.tournament_id,
-                        LosersMatch.round == 2
-                    ).count()
-                
-                # Lower match numbers go to team1_id, higher to team2_id
-                if losers_match.match_number <= (100 + total_r2_matches // 2):
-                    next_match.team1_id = winner_id
-                else:
-                    next_match.team2_id = winner_id
+            if not next_match.team1_id:
+                next_match.team1_id = winner_id
+                next_match.team1_from_winners = False
+                next_match.team1_winners_round = None
+                next_match.team1_winners_match_number = None
+                next_match.team1_losers_match_id = match.id
             else:
-                # Normal progression for other rounds
-                if not next_match.team1_id:
-                    next_match.team1_id = winner_id
-                else:
-                    next_match.team2_id = winner_id
+                next_match.team2_id = winner_id
+                next_match.team2_from_winners = False
+                next_match.team2_winners_round = None
+                next_match.team2_winners_match_number = None
+                next_match.team2_losers_match_id = match.id
 
     db.commit()
-    db.refresh(losers_match)
-    return losers_match 
+    db.refresh(match)
+    return match
