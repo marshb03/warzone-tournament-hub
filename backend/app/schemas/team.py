@@ -14,6 +14,7 @@ class TeamUpdate(BaseModel):
 
 class Team(TeamBase):
     id: int
+    seed: Optional[int] = None
 
     class Config:
         from_attributes = True  # Changed from orm_mode = True

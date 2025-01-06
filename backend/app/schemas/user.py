@@ -2,6 +2,12 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 
+class UserInTournament(BaseModel):
+    id: int
+    username: str
+
+    class Config:
+        from_attributes = True
 class UserBase(BaseModel):
     email: Optional[EmailStr] = None
     username: Optional[str] = None
@@ -21,6 +27,7 @@ class UserUpdate(BaseModel):
 
 class User(UserBase):
     id: int
+    username: str  # Make username required here
 
     class Config:
         from_attributes = True

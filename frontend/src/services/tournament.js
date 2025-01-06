@@ -65,5 +65,10 @@ async getTournamentMatches(id) {
         console.error('Error fetching tournament matches:', error);
         throw error;
     }
+  },
+
+  async getCompletedTournaments() {
+    const response = await api.get('/api/v1/tournaments/?status=COMPLETED');
+    return response.data;
   }
 };

@@ -3,7 +3,7 @@ from pydantic import BaseModel, validator
 from datetime import datetime
 from typing import List, Optional, Dict
 from enum import Enum
-
+from .user import UserInTournament 
 class TournamentFormat(str, Enum):
     SINGLE_ELIMINATION = "SINGLE_ELIMINATION"
     DOUBLE_ELIMINATION = "DOUBLE_ELIMINATION"
@@ -46,6 +46,8 @@ class TournamentBase(BaseModel):
     current_teams: int = 0
     end_date: Optional[datetime] = None
     bracket_config: Optional[TournamentBracketConfig] = None
+    description: Optional[str] = None
+    rules: Optional[str] = None
 
     @validator('team_size')
     def validate_team_size(cls, v):
@@ -71,6 +73,8 @@ class TournamentCreate(BaseModel):
     team_size: int
     max_teams: int
     bracket_config: Optional[TournamentBracketConfig] = None
+    description: Optional[str] = None
+    rules: Optional[str] = None
 
 class TournamentUpdate(BaseModel):
     name: Optional[str] = None
@@ -81,6 +85,8 @@ class TournamentUpdate(BaseModel):
     max_teams: Optional[int] = None
     end_date: Optional[datetime] = None
     bracket_config: Optional[TournamentBracketConfig] = None
+    description: Optional[str] = None
+    rules: Optional[str] = None
 
     @validator('team_size')
     def validate_team_size_update(cls, v):
@@ -96,7 +102,6 @@ class TournamentUpdate(BaseModel):
             if v > 32:
                 raise ValueError('Tournament cannot have more than 32 teams')
         return v
-
 class Tournament(BaseModel):
     id: int
     name: str
@@ -108,9 +113,18 @@ class Tournament(BaseModel):
     max_teams: Optional[int]
     current_teams: int = 0
     creator_id: int
+    creator: Optional[UserInTournament] = None
     status: TournamentStatus
     creator_username: Optional[str] = None
     bracket_config: Optional[TournamentBracketConfig] = None
+    description: Optional[str] = None
+    rules: Optional[str] = None
+
+    @validator('creator_username', always=True)
+    def get_creator_username(cls, v, values):
+        if values.get('creator'):
+            return values['creator'].username
+        return v
 
     class Config:
         from_attributes = True

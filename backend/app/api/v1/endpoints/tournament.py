@@ -32,6 +32,13 @@ def read_tournament(tournament_id: int, db: Session = Depends(deps.get_db)):
     db_tournament = crud.tournament.get_tournament(db, tournament_id=tournament_id)
     if db_tournament is None:
         raise HTTPException(status_code=404, detail="Tournament not found")
+    
+    print("Debug - Tournament:", {
+        "id": db_tournament.id,
+        "creator_id": db_tournament.creator_id,
+        "creator": db_tournament.creator,
+        "creator_username": db_tournament.creator.username if db_tournament.creator else None
+    })
     return db_tournament
 
 # app/api/v1/endpoints/tournament.py
@@ -46,12 +53,20 @@ def read_tournaments(skip: int = 0, limit: int = 100, db: Session = Depends(deps
     return tournaments
 
 @router.put("/{tournament_id}", response_model=schemas.Tournament)
-def update_tournament(tournament_id: int, tournament_update: schemas.TournamentUpdate, db: Session = Depends(deps.get_db), current_user: schemas.User = Depends(deps.get_current_active_user)):
+def update_tournament(
+    tournament_id: int, 
+    tournament_update: schemas.TournamentUpdate, 
+    db: Session = Depends(deps.get_db),
+    current_user: schemas.User = Depends(deps.get_current_active_user)
+):
     db_tournament = crud.tournament.get_tournament(db, tournament_id=tournament_id)
-    if db_tournament is None:
+    if not db_tournament:
         raise HTTPException(status_code=404, detail="Tournament not found")
+    
     if db_tournament.creator_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not enough permissions")
+    
+    # All fields including description and rules will be handled by the update function
     return crud.tournament.update_tournament(db=db, tournament_id=tournament_id, tournament_update=tournament_update)
 
 @router.delete("/{tournament_id}", response_model=schemas.Tournament)

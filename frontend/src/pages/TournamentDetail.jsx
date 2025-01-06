@@ -7,7 +7,8 @@ import {
   Calendar, 
   Clock, 
   AlertCircle,
-  Table 
+  Table,
+  Edit2
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { tournamentService } from '../services/tournament';
@@ -18,6 +19,8 @@ import TeamList from '../components/tournament/TeamList';
 import WinnersBracket from '../components/tournament/WinnersBracket';
 import LosersBracket from '../components/tournament/LosersBracket';
 import MatchUpdateModal from '../components/tournament/MatchUpdateModal';
+import Leaderboard from '../components/tournament/Leaderboard';
+import TournamentDetails from '../components/tournament/TournamentDetails';
 
 const statusStyles = {
   PENDING: 'bg-yellow-500/20 text-yellow-500',
@@ -165,6 +168,27 @@ const TournamentDetail = () => {
     );
   };
 
+  const handleTournamentUpdate = async (updatedData) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Update tournament via service
+      await tournamentService.updateTournament(id, updatedData);
+      
+      // Fetch updated tournament data
+      const updatedTournament = await tournamentService.getTournamentById(id);
+      setTournament(updatedTournament);
+  
+      // Show success message or handle UI updates
+    } catch (error) {
+      console.error('Failed to update tournament:', error);
+      setError('Failed to update tournament. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleMatchUpdate = async (matchData) => {
     try {
       setError(null);
@@ -207,6 +231,15 @@ const TournamentDetail = () => {
   
   const renderTabContent = () => {
     switch (activeTab) {
+      case 'details':
+      return (
+        <TournamentDetails
+          tournament={tournament}
+          canManage={canManageTournament}
+          onUpdate={handleTournamentUpdate}
+        />
+      );
+
       case 'teams':
         return (
           <Card className="p-6">
@@ -240,6 +273,7 @@ const TournamentDetail = () => {
               matches={winnerMatches}
               canManage={canManageTournament && tournament.status === 'ONGOING'}
               onMatchUpdate={renderMatchUpdateModal}
+              totalTeams={tournament.current_teams}
             />
             
             {tournament.format === 'DOUBLE_ELIMINATION' && (
@@ -254,18 +288,22 @@ const TournamentDetail = () => {
           </div>
         );
       
-      case 'leaderboard':
-        return (
-          <Card className="p-6 text-center">
-            <Table className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p className="text-gray-400">
-              Leaderboard will be available soon
-            </p>
-          </Card>
-        );
-      
-      default:
-        return null;
+        case 'leaderboard':
+          return tournament.status === 'PENDING' ? (
+            <Card className="p-6 text-center">
+              <Table className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p className="text-gray-400">
+                Leaderboard will be available once the tournament begins
+              </p>
+            </Card>
+          ) : (
+            <Leaderboard
+              matches={[...winnerMatches, ...loserMatches]}
+            />
+          );
+        
+        default:
+          return null;
     }
   };
 
@@ -400,6 +438,15 @@ const TournamentDetail = () => {
       {/* Tabs Navigation */}
       <div className="border-b border-gray-800 mb-6">
         <div className="flex space-x-4">
+          <TabButton 
+            active={activeTab === 'details'} 
+            onClick={() => setActiveTab('details')}
+          >
+            <div className="flex items-center">
+              <Edit2 className="h-4 w-4 mr-2" />
+              Details
+            </div>
+          </TabButton>
           <TabButton 
             active={activeTab === 'bracket'} 
             onClick={() => setActiveTab('bracket')}

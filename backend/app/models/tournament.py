@@ -29,6 +29,8 @@ class Tournament(Base):
     current_teams = Column(Integer, default=0)
     creator_id = Column(Integer, ForeignKey("users.id"))
     status = Column(Enum(TournamentStatus), default=TournamentStatus.PENDING)
+    description = Column(String, nullable=True)
+    rules = Column(String, nullable=True)
     
     # New field for bracket configuration
     bracket_config = Column(JSON, nullable=True)

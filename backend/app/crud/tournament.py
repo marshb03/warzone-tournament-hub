@@ -1,5 +1,5 @@
 # app/crud/tournament.py
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from app.models.tournament import Tournament, TournamentFormat, TournamentStatus
 from app.models import Match, Team
 from app.schemas.tournament import TournamentUpdate, TournamentCreate, TournamentBracketConfig
@@ -24,10 +24,17 @@ def create_tournament(db: Session, tournament: TournamentCreate, creator_id: int
     return db_tournament
 
 def get_tournament(db: Session, tournament_id: int):
-    return db.query(Tournament).filter(Tournament.id == tournament_id).first()
+    return db.query(Tournament)\
+        .options(joinedload(Tournament.creator))\
+        .filter(Tournament.id == tournament_id)\
+        .first()
 
 def get_tournaments(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(Tournament).offset(skip).limit(limit).all()
+    return db.query(Tournament)\
+        .options(joinedload(Tournament.creator))\
+        .offset(skip)\
+        .limit(limit)\
+        .all()
 
 def update_tournament(db: Session, tournament_id: int, tournament_update: TournamentUpdate):
     db_tournament = get_tournament(db, tournament_id)

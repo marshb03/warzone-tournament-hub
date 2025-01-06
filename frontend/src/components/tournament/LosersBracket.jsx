@@ -4,7 +4,7 @@ import { Trophy, ChevronRight, ChevronLeft } from 'lucide-react';
 const MatchCard = ({ match, onMatchClick }) => {
 
   const getTeamStyle = (teamId) => {
-    const styles = ['p-2 text-sm rounded flex justify-between items-center'];
+    const styles = ['p-1 text-sm rounded flex justify-between items-center'];
     styles.push(teamId ? 'bg-gray-700' : 'bg-gray-700/50');
     
     if (match.winner_id === teamId) {
@@ -41,13 +41,13 @@ const MatchCard = ({ match, onMatchClick }) => {
     if (fromWinners) {
       return (
         <span className="text-blue-500 text-sm">
-          Loser of Round {round} Match {matchNumber}
+          Loser of Winners Round {round} Match {matchNumber}
         </span>
       );
     } else {
       return (
         <span className="text-red-500 text-sm">
-          Winner of Match {matchNumber}
+          Winner of Losers Match {matchNumber}
         </span>
       );
     }
@@ -56,8 +56,8 @@ const MatchCard = ({ match, onMatchClick }) => {
   return (
     <div className="bg-gray-800 rounded p-1 w-64 cursor-pointer hover:bg-gray-700 transition-all duration-200">
       <div onClick={() => onMatchClick(match)}>
-        <div className="text-xs text-gray-400 px-2 py-1">
-          Losers Match {match.match_number} (Round {match.round})
+        <div className="text-xs text-gray-400 px-2 py-0.25">
+          Losers Match {match.match_number}
         </div>
         
         <div className={getTeamStyle(match.team1_id)}>
@@ -80,9 +80,13 @@ const RoundColumn = ({ round, matches, onMatchClick, allMatches }) => {
   // Calculate spacing based on round
   const getRoundSpacing = () => {
     switch (round.round_number) {
-      case 1: return 'gap-24';  // Slightly more space for R1
-      case 2: return 'gap-48';  // Double the space for R2
-      default: return 'gap-96'; // Maximum space for finals
+      case 1: return 'gap-12';  // Slightly more space for R1
+      case 2: return 'gap-12';  // Double the space for R2
+      case 3: return 'gap-48';
+      case 4: return 'gap-48';
+      case 5: return 'gap-96';
+      case 6: return 'gap-96';
+      default: return 'gap-48'; // Maximum space for finals
     }
   };
 

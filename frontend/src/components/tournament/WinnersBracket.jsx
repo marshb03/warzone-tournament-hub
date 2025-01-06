@@ -1,14 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Trophy, ChevronRight, ChevronLeft } from 'lucide-react';
 
-// Inside WinnersBracket component
-
 const MatchCard = ({ match, onMatchClick, allMatches }) => {
   // Is this a championship match?
   const isChampionship = match.round >= 98;
 
   const getTeamStyle = (teamId) => {
-    const styles = ['p-2 text-sm rounded flex justify-between items-center'];
+    const styles = ['p-1 text-sm rounded flex justify-between items-center'];
     styles.push(teamId ? 'bg-gray-700' : 'bg-gray-700/50');
     
     if (match.winner_id === teamId) {
@@ -50,17 +48,23 @@ const MatchCard = ({ match, onMatchClick, allMatches }) => {
 
     // Regular match progression
     if (match.round >= 2) {
-      const feederMatch = allMatches.find(m => 
-        m.next_match_id === match.id && 
-        (position === 1 ? m.match_number < match.match_number : m.match_number > match.match_number)
+      const possibleFeederMatches = allMatches.filter(m => 
+        m.next_match_id === match.id && m.round === match.round - 1
       );
 
-      if (feederMatch) {
-        return (
-          <span className="text-blue-500 text-sm">
-            Winner of Match {feederMatch.match_number}
-          </span>
-        );
+      if (possibleFeederMatches.length > 0) {
+        possibleFeederMatches.sort((a, b) => a.match_number - b.match_number);
+        const feederMatch = position === 1 
+          ? possibleFeederMatches[0] 
+          : possibleFeederMatches[possibleFeederMatches.length - 1];
+
+        if (feederMatch) {
+          return (
+            <span className="text-blue-500 text-sm">
+              Winner of Match {feederMatch.match_number}
+            </span>
+          );
+        }
       }
     }
 
@@ -100,7 +104,7 @@ const MatchCard = ({ match, onMatchClick, allMatches }) => {
       <div 
         onClick={() => onMatchClick(match)}
       >
-        <div className="text-xs text-gray-400 px-2 py-1">
+        <div className="text-xs text-gray-400 px-2 py-0.25">
           Match {match.match_number}
         </div>
         
@@ -124,8 +128,9 @@ const RoundColumn = ({ round, matches, onMatchClick, allMatches }) => {
   // Calculate spacing based on round
   const getRoundSpacing = () => {
     switch (round.round_number) {
-      case 1: return 'gap-24';  // Slightly more space for R1
-      case 2: return 'gap-48';  // Double the space for R2
+      case 1: return 'gap-6';  // Slightly more space for R1
+      case 2: return 'gap-32';  // Double the space for R2
+      case 3: return 'gap-80';
       default: return 'gap-96'; // Maximum space for finals
     }
   };
@@ -149,21 +154,59 @@ const RoundColumn = ({ round, matches, onMatchClick, allMatches }) => {
   );
 };
 
-const WinnersBracket = ({ matches = [], canManage = false, onMatchUpdate }) => {
+const WinnersBracket = ({ matches = [], canManage = false, onMatchUpdate, totalTeams }) => {
   const [scrollPosition, setScrollPosition] = useState(0);
   const containerRef = useRef(null);
 
-  // Group matches by round
+  const getRoundName = (roundNumber, teamCount) => {
+    // Handle championship matches
+    if (roundNumber >= 98) {
+      return roundNumber === 98 ? 'Championship' : 'Championship Reset';
+    }
+
+    // For 4 teams
+    if (teamCount <= 4) {
+      return roundNumber === 1 ? 'Round 1' : 'Finals';
+    }
+
+    // For 5-8 teams
+    if (teamCount <= 8) {
+      switch(roundNumber) {
+        case 1: return 'Round 1';
+        case 2: return 'Semifinals';
+        case 3: return 'Finals';
+        default: return `Round ${roundNumber}`;
+      }
+    }
+
+    // For 9-16 teams
+    if (teamCount <= 16) {
+      switch(roundNumber) {
+        case 1: return 'Round 1';
+        case 2: return 'Round 2';
+        case 3: return 'Semifinals';
+        case 4: return 'Finals';
+        default: return `Round ${roundNumber}`;
+      }
+    }
+
+    // For 17-32 teams
+    switch(roundNumber) {
+      case 1: return 'Round 1';
+      case 2: return 'Round 2';
+      case 3: return 'Round 3';
+      case 4: return 'Semifinals';
+      case 5: return 'Finals';
+      default: return `Round ${roundNumber}`;
+    }
+  };
+
   const rounds = React.useMemo(() => {
     const roundsMap = matches.reduce((acc, match) => {
       if (!acc[match.round]) {
         acc[match.round] = {
           round_number: match.round,
-          round_name: match.round === 1 ? 'Round 1' : 
-                     match.round === 2 ? 'Semifinals' :
-                     match.round === 98 ? 'Championship' :
-                     match.round === 99 ? 'Championship Reset' :
-                     'Finals',
+          round_name: getRoundName(match.round, totalTeams),
           matches: []
         };
       }
@@ -172,7 +215,7 @@ const WinnersBracket = ({ matches = [], canManage = false, onMatchUpdate }) => {
     }, {});
 
     return Object.values(roundsMap).sort((a, b) => a.round_number - b.round_number);
-  }, [matches]);
+  }, [matches, totalTeams]);
 
   const handleScroll = (direction) => {
     if (!containerRef.current) return;
@@ -252,7 +295,7 @@ const WinnersBracket = ({ matches = [], canManage = false, onMatchUpdate }) => {
         ref={containerRef}
         className="overflow-x-auto hide-scrollbar"
       >
-        <div className="flex justify-center items-center gap-32 p-8 min-w-max">
+        <div className="flex justify-center items-center gap-28 p-8 min-w-max">
           {rounds.map((round) => (
             <RoundColumn
               key={round.round_number}

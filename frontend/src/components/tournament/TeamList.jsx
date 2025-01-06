@@ -9,7 +9,10 @@ const TeamCard = ({ team, onEdit, onDelete, canManage }) => (
     <div>
       <div className="flex items-center space-x-3">
         <h3 className="font-semibold">{team.name}</h3>
-        <span className="text-sm text-gray-400">Seed #{team.seed}</span>
+        {/* Simplified seed display */}
+        <span className="text-sm text-gray-400">
+          Seed #{team.seed}
+        </span>
       </div>
     </div>
     {canManage && (
