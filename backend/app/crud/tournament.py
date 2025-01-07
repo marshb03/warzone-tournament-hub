@@ -37,19 +37,28 @@ def get_tournaments(db: Session, skip: int = 0, limit: int = 100):
         .all()
 
 def update_tournament(db: Session, tournament_id: int, tournament_update: TournamentUpdate):
-    db_tournament = get_tournament(db, tournament_id)
-    if db_tournament:
-        update_data = tournament_update.dict(exclude_unset=True)
-        
-        # Handle bracket_config separately if it exists
-        if 'bracket_config' in update_data and update_data['bracket_config']:
+    db_tournament = db.query(Tournament).filter(Tournament.id == tournament_id).first()
+    if not db_tournament:
+        return None
+    
+    # Convert the model to a dict, excluding unset values
+    update_data = tournament_update.dict(exclude_unset=True)
+    
+    # Handle bracket_config separately if it exists
+    if 'bracket_config' in update_data and update_data['bracket_config']:
+        # If it's already a dict, use it as is
+        if isinstance(update_data['bracket_config'], dict):
+            pass
+        # If it's a Pydantic model, convert to dict
+        elif hasattr(update_data['bracket_config'], 'dict'):
             update_data['bracket_config'] = update_data['bracket_config'].dict()
-            
-        for key, value in update_data.items():
-            setattr(db_tournament, key, value)
-            
-        db.commit()
-        db.refresh(db_tournament)
+    
+    # Update the tournament attributes
+    for field, value in update_data.items():
+        setattr(db_tournament, field, value)
+    
+    db.commit()
+    db.refresh(db_tournament)
     return db_tournament
 
 def delete_tournament(db: Session, tournament_id: int):

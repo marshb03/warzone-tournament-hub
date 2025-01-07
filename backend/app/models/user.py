@@ -1,7 +1,13 @@
 # app/models/user.py
-from sqlalchemy import Boolean, Column, Integer, String
+from sqlalchemy import Boolean, Column, Integer, String, Enum
 from sqlalchemy.orm import relationship
+import enum
 from app.models.base import Base
+
+class UserRole(str, enum.Enum):
+    USER = "USER"
+    HOST = "HOST"
+    SUPER_ADMIN = "SUPER_ADMIN"
 
 class User(Base):
     __tablename__ = "users"
@@ -11,9 +17,33 @@ class User(Base):
     username = Column(String, unique=True, index=True)
     hashed_password = Column(String)
     is_active = Column(Boolean, default=True)
-    is_superuser = Column(Boolean, default=False)
     is_verified = Column(Boolean, default=False)
     
-        # Add these relationships
-    created_tournaments = relationship("Tournament", back_populates="creator")
-    teams = relationship("Team", secondary="team_player", back_populates="players")
+    # New role field with default as regular user
+    role = Column(
+        Enum(UserRole),
+        default=UserRole.USER,
+        nullable=False
+    )
+    
+    # Remove is_superuser as it's replaced by role
+    
+    # Relationships
+    created_tournaments = relationship(
+        "Tournament",
+        back_populates="creator",
+        cascade="all, delete-orphan"
+    )
+    teams = relationship(
+        "Team",
+        secondary="team_player",
+        back_populates="players"
+    )
+
+    @property
+    def is_superuser(self):
+        """
+        Maintain backward compatibility with existing code
+        that checks is_superuser
+        """
+        return self.role == UserRole.SUPER_ADMIN

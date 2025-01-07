@@ -1,5 +1,5 @@
 # app/schemas/__init__.py
-from .user import User, UserCreate, UserUpdate
+from .user import User, UserCreate, UserUpdate, UserBase, UserInDB, UserInTournament, UserRole
 from .tournament import Tournament, TournamentCreate, TournamentUpdate, TournamentWithTeams
 from .team import Team, TeamCreate, TeamUpdate, TeamWithPlayers, TeamInTournament
 from .match import Match, MatchCreate, MatchUpdate, TournamentBracketResponse

@@ -57,7 +57,7 @@ def login_access_token(
     )
     if not user:
         raise HTTPException(status_code=400, detail="Incorrect email/username or password")
-    if not crud.user.is_active(user):
+    if not user.is_active:  # Use the user model property directly
         raise HTTPException(status_code=400, detail="Inactive user")
     if not user.is_verified:
         raise HTTPException(status_code=400, detail="Please verify your email before logging in")
@@ -76,7 +76,6 @@ def login_access_token(
         "access_token": access_token,
         "token_type": "bearer",
     }
-
 
 @router.post("/test-token", response_model=schemas.User)
 def test_token(current_user: schemas.User = Depends(deps.get_current_user)):

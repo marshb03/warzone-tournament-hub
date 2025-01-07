@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from app.schemas.player_ranking import PlayerRankingCreate, PlayerRankingUpdate, PlayerRanking
 from app.crud import player_ranking as crud_player_ranking
 from app.api import deps
-from app.api.deps import get_current_active_superuser
+from app.api.deps import get_current_super_admin
 from app.schemas.user import User
 
 router = APIRouter()
@@ -94,7 +94,7 @@ def read_player_ranking(
 def create_player_ranking(
     ranking: PlayerRankingCreate, 
     db: Session = Depends(deps.get_db),
-    current_user: User = Depends(get_current_active_superuser)
+    current_user: User = Depends(get_current_super_admin)
 ):
     return crud_player_ranking.create_player_ranking(db=db, ranking=ranking)
 
@@ -103,7 +103,7 @@ def update_player_ranking(
     ranking_id: int, 
     ranking: PlayerRankingUpdate, 
     db: Session = Depends(deps.get_db),
-    current_user: User = Depends(get_current_active_superuser)
+    current_user: User = Depends(get_current_super_admin)
 ):
     db_ranking = crud_player_ranking.update_player_ranking(db, ranking_id=ranking_id, ranking=ranking)
     if db_ranking is None:
@@ -114,7 +114,7 @@ def update_player_ranking(
 def delete_player_ranking(
     ranking_id: int, 
     db: Session = Depends(deps.get_db),
-    current_user: User = Depends(get_current_active_superuser)
+    current_user: User = Depends(get_current_super_admin)
 ):
     db_ranking = crud_player_ranking.delete_player_ranking(db, ranking_id=ranking_id)
     if db_ranking is None:
