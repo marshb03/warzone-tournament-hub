@@ -33,6 +33,29 @@ class Match(MatchBase):
     class Config:
         from_attributes = True
 
+class LosersMatchInBracket(BaseModel):
+    id: int
+    tournament_id: int
+    round: int
+    match_number: int
+    team1_id: Optional[int] = None
+    team2_id: Optional[int] = None
+    winner_id: Optional[int] = None
+    next_match_id: Optional[int] = None
+    team1: Optional[TeamInMatch] = None
+    team2: Optional[TeamInMatch] = None
+    winner: Optional[TeamInMatch] = None
+    # Source tracking fields
+    team1_from_winners: bool = True
+    team1_winners_round: Optional[int] = None
+    team1_winners_match_number: Optional[int] = None
+    team2_from_winners: bool = True
+    team2_winners_round: Optional[int] = None
+    team2_winners_match_number: Optional[int] = None
+
+    class Config:
+        from_attributes = True
+
 # Separate schema for bracket responses
 class BracketMatch(Match):
     # Include only the IDs of related matches to avoid recursion
@@ -57,6 +80,7 @@ class BracketResponse(BaseModel):
 class TournamentBracketResponse(BaseModel):
     tournament_id: int
     winners_bracket: List[BracketMatch]
+    losers_bracket: List[LosersMatchInBracket] = []
     finals: List[BracketMatch]
     total_rounds: int
 

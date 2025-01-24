@@ -1,7 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Trophy, ChevronRight, ChevronLeft } from 'lucide-react';
+import { debugLosersBracket } from './debug-utils';
 
 const MatchCard = ({ match, onMatchClick }) => {
+  // Add debug logging when match data changes
+  React.useEffect(() => {
+    debugLosersBracket.logMatchData(match);
+  }, [match]);
 
   const getTeamStyle = (teamId) => {
     const styles = ['p-1 text-sm rounded flex justify-between items-center'];
@@ -17,39 +22,38 @@ const MatchCard = ({ match, onMatchClick }) => {
   };
 
   const getTeamDisplay = (position) => {
-    // Get the specific team data and ID based on position
+    // Get the correct team based on position
     const team = position === 1 ? match.team1 : match.team2;
-    const teamId = position === 1 ? match.team1_id : match.team2_id;
-
-    // If we have a teamId and team data, display it
-    if (teamId && team) {
-      return (
-        <span className="flex items-center gap-2">
-          <span className="text-xs bg-gray-600 px-1 rounded">
-            {team.seed}
-          </span>
-          <span>{team.name}</span>
-        </span>
-      );
+    
+    // If we have a team ID and team data, display it
+    if ((position === 1 ? match.team1_id : match.team2_id) && team) {
+        return (
+            <span className="flex items-center gap-2">
+                <span className="text-xs bg-gray-600 px-1 rounded">
+                    {team.seed}
+                </span>
+                <span>{team.name}</span>
+            </span>
+        );
     }
 
-    // If no team assigned yet, show placeholder based on source
-    const fromWinners = position === 1 ? match.team1_from_winners : match.team2_from_winners;
-    const round = position === 1 ? match.team1_winners_round : match.team2_winners_round;
-    const matchNumber = position === 1 ? match.team1_winners_match_number : match.team2_winners_match_number;
+    // Check if team is from winners bracket
+    const isFromWinners = position === 1 ? match.team1_from_winners : match.team2_from_winners;
+    const winnersRound = position === 1 ? match.team1_winners_round : match.team2_winners_round;
+    const winnersMatch = position === 1 ? match.team1_winners_match_number : match.team2_winners_match_number;
 
-    if (fromWinners) {
-      return (
-        <span className="text-blue-500 text-sm">
-          Loser of Winners Round {round} Match {matchNumber}
-        </span>
-      );
+    if (isFromWinners && winnersRound && winnersMatch) {
+        return (
+            <span className="text-blue-500 text-sm">
+                Loser of Winners Round {winnersRound} Match {winnersMatch}
+            </span>
+        );
     } else {
-      return (
-        <span className="text-red-500 text-sm">
-          Winner of Losers Match {matchNumber}
-        </span>
-      );
+        return (
+            <span className="text-red-500 text-sm">
+                Winner of Losers Match {match.match_number}
+            </span>
+        );
     }
   };
 
@@ -227,3 +231,4 @@ const LosersBracket = ({ matches = [], canManage = false, onMatchUpdate }) => {
 };
 
 export default LosersBracket;
+

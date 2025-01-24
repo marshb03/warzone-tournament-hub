@@ -7,7 +7,7 @@ from app.models.base import Base
 class UserRole(str, enum.Enum):
     USER = "USER"
     HOST = "HOST"
-    SUPER_ADMIN = "SUPER_ADMIN"
+    SUPER_ADMIN = "SUPER_ADMIN"  # If you have this in a separate file
 
 class User(Base):
     __tablename__ = "users"
@@ -18,27 +18,12 @@ class User(Base):
     hashed_password = Column(String)
     is_active = Column(Boolean, default=True)
     is_verified = Column(Boolean, default=False)
-    
-    # New role field with default as regular user
-    role = Column(
-        Enum(UserRole),
-        default=UserRole.USER,
-        nullable=False
-    )
-    
-    # Remove is_superuser as it's replaced by role
-    
-    # Relationships
-    created_tournaments = relationship(
-        "Tournament",
-        back_populates="creator",
-        cascade="all, delete-orphan"
-    )
-    teams = relationship(
-        "Team",
-        secondary="team_player",
-        back_populates="players"
-    )
+    role = Column(Enum(UserRole), nullable=False, default=UserRole.USER)
+
+    # Add these relationships
+    created_tournaments = relationship("Tournament", back_populates="creator")
+    teams = relationship("Team", secondary="team_player", back_populates="players")
+    activities = relationship("ActivityLog", back_populates="user")  # Add this line
 
     @property
     def is_superuser(self):

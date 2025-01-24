@@ -44,17 +44,10 @@ const config = {
       },
       matches: {
         base: '/api/v1/matches',
-        create: '/api/v1/matches/',
-        createLosers: '/api/v1/matches/losers',
-        details: (id) => `/api/v1/matches/${id}`,
-        tournament: (id) => `/api/v1/matches/tournament/${id}`,
-        update: (id) => `/api/v1/matches/${id}`,
-        updateLosers: (match_id) => `/api/v1/matches/losers/${match_id}`,
-        delete: (id) => `/api/v1/matches/${id}`,
-        losersMatches: {
-            list: (tournamentId) => `/api/v1/losers-matches/tournament/${tournamentId}`,
-            update: (id) => `/api/v1/matches/losers/${id}`  // Changed to match Swagger endpoint
-        }
+        winners: (id) => `/api/v1/matches/winners/${id}`,
+        losers: (id) => `/api/v1/matches/losers/${id}`,
+        championship: (id) => `/api/v1/matches/championship/${id}`,
+        tournament: (id) => `/api/v1/matches/tournament/${id}`
     },
   },
 

@@ -49,18 +49,11 @@ export const tournamentService = {
     return response.data;
 },
 
-async getTournamentMatches(id) {
+  async getTournamentMatches(id) {
     try {
-        const winnersResponse = await api.get(config.endpoints.matches.tournament(id));
-        // Updated to use correct endpoint
-        const losersResponse = await api.get(config.endpoints.matches.losersMatches.list(id));
-
-        return {
-            winners_bracket: winnersResponse.data.winners_bracket || [],
-            losers_bracket: losersResponse.data || [],
-            finals: winnersResponse.data.finals || [],
-            total_rounds: winnersResponse.data.total_rounds
-        };
+        const response = await api.get(config.endpoints.matches.tournament(id));
+        console.log('Tournament matches response:', response.data); // Debug log
+        return response.data;
     } catch (error) {
         console.error('Error fetching tournament matches:', error);
         throw error;

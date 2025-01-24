@@ -3,18 +3,17 @@ from typing import List, Dict, Optional, Union
 from sqlalchemy.orm import Session
 from app.models.match import Match
 from app.models.team import Team
-from .WinnersBracketTemplate import (
-    get_round_matches,
-    get_match_by_id,
-    get_next_match_id,
-    is_winner_reference,
-    parse_match_id,
-    get_matches_feeding_into
-)
-from .LosersBracketTemplate import get_template_for_size
-import math
 from app.models.tournament import Tournament, TournamentFormat
 from app.models.losers_match import LosersMatch
+from .WinnersBracketTemplate import (
+    get_round_matches,
+    get_next_match_id,
+    parse_match_id,
+    get_template_for_size,
+    get_team_source_details,
+    is_seed_reference,
+    is_match_reference
+)
 import re
 
 class WinnersBracket:
@@ -27,7 +26,6 @@ class WinnersBracket:
         self.num_teams = len(teams)
         self.template_to_db_map: Dict[str, int] = {}  # Maps template match IDs to database IDs
         self.db_to_template_map: Dict[int, str] = {}  # Maps database IDs to template match IDs
-        self.generated_matches: Dict[int, List[dict]] = {}  # Stores generated match templates
         self._validate()
 
     def _validate(self) -> None:
@@ -44,36 +42,36 @@ class WinnersBracket:
         if len(set(seeds)) != len(seeds):
             raise ValueError("Team seeds must be unique")
 
-    def _calculate_num_rounds(self) -> int:
-        """Calculate total number of rounds needed for the bracket."""
-        return math.ceil(math.log2(self.num_teams))
-
-    def _get_team_id_by_seed(self, seed: Union[int, str]) -> Optional[int]:
+    def _get_team_by_source(self, source: Dict) -> Optional[int]:
         """
-        Get team ID from seed number or winner reference.
+        Get team ID based on source information from template.
         
         Args:
-            seed: Either an integer (direct seed) or string (match ID reference)
+            source: Source dictionary containing either seed or match reference
             
         Returns:
             Team ID if found, None otherwise
         """
-        if isinstance(seed, int):
+        if is_seed_reference(source):
             # Direct seed reference
+            seed = source["seed"]
             for team in self.teams:
                 if team.seed == seed:
                     return team.id
             return None
-        elif is_winner_reference(seed):
-            # Winner reference (e.g., "R1M1")
-            db_match_id = self.template_to_db_map.get(seed)
+        
+        elif is_match_reference(source):
+            # Winner from previous match
+            match_id = source["from"]
+            db_match_id = self.template_to_db_map.get(match_id)
             if db_match_id:
                 match = self.db.query(Match).filter(Match.id == db_match_id).first()
                 return match.winner_id if match and match.winner_id else None
+        
         return None
 
     def _create_match(self, round_num: int, match_num: int, template_id: str,
-                     team1_seed: Optional[Union[int, str]], team2_seed: Optional[Union[int, str]]) -> Match:
+                     team1_source: Dict, team2_source: Dict) -> Match:
         """
         Create a new match in the database.
         
@@ -81,11 +79,11 @@ class WinnersBracket:
             round_num: Round number
             match_num: Match number within the round
             template_id: Template match ID (e.g., "R1M1")
-            team1_seed: First team's seed or winner reference
-            team2_seed: Second team's seed or winner reference
+            team1_source: Source info for first team
+            team2_source: Source info for second team
         """
-        team1_id = self._get_team_id_by_seed(team1_seed) if team1_seed else None
-        team2_id = self._get_team_id_by_seed(team2_seed) if team2_seed else None
+        team1_id = self._get_team_by_source(team1_source)
+        team2_id = self._get_team_by_source(team2_source)
         
         match = Match(
             tournament_id=self.tournament_id,
@@ -104,111 +102,49 @@ class WinnersBracket:
         
         return match
 
-    def _create_matches_for_round(self, round_num: int) -> List[Match]:
-        """Create matches for a specific round using template matches."""
-        round_matches = []
-        template_matches = get_round_matches(self.num_teams, round_num)
-        
-        for match_num, template_match in enumerate(template_matches, 1):
-            match_id = template_match["match_id"]
-            seed1, seed2 = template_match["seeds"]
-            
-            match = self._create_match(
-                round_num=round_num,
-                match_num=match_num,
-                template_id=match_id,
-                team1_seed=seed1,
-                team2_seed=seed2
-            )
-            round_matches.append(match)
-        
-        return round_matches
-
-    def _create_later_round_match(self, round_num: int, match_num: int) -> Match:
-        """
-        Create a match for rounds after round 2.
-        Automatically generates appropriate template IDs and next match info.
-        """
-        template_id = f"R{round_num}M{match_num}"
-        next_match_template = None
-        
-        # Calculate next match info
-        if round_num < self._calculate_num_rounds():
-            next_round = round_num + 1
-            next_match_num = (match_num + 1) // 2  # Integer division to get parent match
-            next_match_template = f"R{next_round}M{next_match_num}"
-
-        match = self._create_match(
-            round_num=round_num,
-            match_num=match_num,
-            template_id=template_id,
-            team1_seed=None,
-            team2_seed=None
-        )
-
-        # Store the next match template ID for progression setup
-        if next_match_template:
-            match_info = {
-                "match_id": template_id,
-                "next_match": next_match_template,
-                "seeds": (None, None)
-            }
-            template_round = self.generated_matches.setdefault(round_num, [])
-            template_round.append(match_info)
-
-        return match
-
     def _set_match_progression(self) -> None:
         """Set up next_match_id connections after all matches are created."""
-        # Handle all rounds
-        for round_num in self.matches:
-            for match in self.matches[round_num]:
-                template_id = self.db_to_template_map[match.id]
-                template_match = None
-
-                # Try to get from predefined templates first
-                if round_num <= 2:
-                    template_match = get_match_by_id(self.num_teams, template_id)
-                # If not found and we have generated template, use that
-                elif round_num in self.generated_matches:
-                    template_match = next(
-                        (m for m in self.generated_matches[round_num] 
-                         if m["match_id"] == template_id),
-                        None
-                    )
-
-                if template_match and template_match["next_match"]:
-                    next_match_id = self.template_to_db_map.get(template_match["next_match"])
-                    if next_match_id:
-                        match.next_match_id = next_match_id
+        template = get_template_for_size(self.num_teams)
+        
+        for round_num in template["rounds"]:
+            for match_template in template["rounds"][round_num]:
+                current_match_id = match_template["match_id"]
+                next_match_id = match_template.get("next_match")
+                
+                if next_match_id:
+                    current_db_id = self.template_to_db_map.get(current_match_id)
+                    next_db_id = self.template_to_db_map.get(next_match_id)
+                    
+                    if current_db_id and next_db_id:
+                        match = self.db.query(Match).filter(Match.id == current_db_id).first()
+                        if match:
+                            match.next_match_id = next_db_id
                         
-        self.db.flush()  # Ensure all next_match_id values are saved
+        self.db.flush()
 
     def generate_bracket(self) -> Dict[int, List[Match]]:
-        """Generate the complete winners bracket."""
-        num_rounds = self._calculate_num_rounds()
+        """Generate the complete winners bracket using templates."""
+        template = get_template_for_size(self.num_teams)
         
-        # Create first two rounds using templates
-        for current_round in range(1, min(3, num_rounds + 1)):
-            round_matches = self._create_matches_for_round(current_round)
-            if round_matches:
-                self.matches[current_round] = round_matches
+        # Create all rounds using templates
+        for current_round in template["rounds"].keys():
+            round_matches = []
+            for match_template in template["rounds"][current_round]:
+                match_id = match_template["match_id"]
+                _, _, match_num = parse_match_id(match_id)
+                
+                match = self._create_match(
+                    round_num=current_round,
+                    match_num=match_num,
+                    template_id=match_id,
+                    team1_source=match_template["team1"],
+                    team2_source=match_template["team2"]
+                )
+                round_matches.append(match)
+            
+            self.matches[current_round] = round_matches
 
-        # Generate remaining rounds
-        for current_round in range(3, num_rounds + 1):
-            prev_matches = self.matches[current_round - 1]
-            current_matches = []
-            match_num = 1
-
-            # Create matches for this round
-            for i in range(0, len(prev_matches), 2):
-                match = self._create_later_round_match(current_round, match_num)
-                current_matches.append(match)
-                match_num += 1
-
-            self.matches[current_round] = current_matches
-
-        # Set up match progression after all matches are created
+        # Set up match progression
         self._set_match_progression()
 
         self.db.commit()
@@ -219,17 +155,6 @@ class WinnersBracket:
         """
         Update a winners bracket match with its winner and handle progression.
         Also handles dropping losing teams into the losers bracket.
-        
-        Args:
-            match_id: ID of the match being updated
-            winner_id: ID of the winning team
-            db: Database session
-            
-        Returns:
-            Updated Match object
-            
-        Raises:
-            ValueError: If match not found, winner invalid, or template mapping missing
         """
         # Get match and validate
         match = db.query(Match).filter(Match.id == match_id).first()
@@ -252,7 +177,6 @@ class WinnersBracket:
         # Get winners bracket mappings
         winners_config = tournament.bracket_config.get('winners', {})
         db_to_template = winners_config.get('db_to_template_map', {})
-        template_to_db = winners_config.get('template_to_db_map', {})
         
         # Get current match template ID
         template_id = db_to_template.get(str(match_id))
@@ -266,41 +190,44 @@ class WinnersBracket:
 
         # If tournament is double elimination, handle dropping loser to losers bracket
         if tournament.format == TournamentFormat.DOUBLE_ELIMINATION:
+            from .LosersBracketTemplate import get_template_for_size as get_losers_template_for_size
+            
             # Get losers bracket mappings
             losers_config = tournament.bracket_config.get('losers', {})
             losers_template_to_db = losers_config.get('template_to_db_map', {})
             
-            # Get source match info from unprefixed template ID
-            # The template_id will be like "R1M1" but we need round and match numbers
-            template_matches = template_id.split('R')[1].split('M')  # Split "R1M1" into ["1", "1"]
-            round_num = int(template_matches[0])
-            match_num = int(template_matches[1])
+            # Get source match info from template ID
+            _, round_num, match_num = parse_match_id(template_id)
             
             # Get losers bracket template
-            template = get_template_for_size(len(tournament.teams))
+            losers_template = get_losers_template_for_size(len(tournament.teams))
             
             # Look through losers matches to find where this loser belongs
-            for round_matches in template["rounds"].values():
+            for round_matches in losers_template["rounds"].values():
                 for losers_match in round_matches:
                     # Check both team slots for a match expecting this loser
-                    for team_source in [losers_match["team1"], losers_match["team2"]]:
-                        if (team_source.get("from_winners") and 
-                            team_source.get("round") == round_num and
-                            team_source.get("match") == match_num):
-                            # Found the right match, get database ID
-                            db_match_id = losers_template_to_db.get(losers_match["match_id"])
-                            if db_match_id:
-                                losers_match_db = db.query(LosersMatch).filter(
-                                    LosersMatch.id == db_match_id
-                                ).first()
-                                if losers_match_db:
-                                    # Place loser in appropriate slot based on template
-                                    if team_source == losers_match["team1"]:
-                                        losers_match_db.team1_id = match.loser_id
-                                    else:
-                                        losers_match_db.team2_id = match.loser_id
-                                    
-                                    db.add(losers_match_db)
+                    if (losers_match["team1"].get("from_winners") and 
+                        losers_match["team1"].get("round") == round_num and
+                        losers_match["team1"].get("match") == match_num):
+                        db_match_id = losers_template_to_db.get(losers_match["match_id"])
+                        if db_match_id:
+                            losers_match_db = db.query(LosersMatch).filter(
+                                LosersMatch.id == db_match_id
+                            ).first()
+                            if losers_match_db:
+                                losers_match_db.team1_id = match.loser_id
+                                db.add(losers_match_db)
+                    elif (losers_match["team2"].get("from_winners") and 
+                          losers_match["team2"].get("round") == round_num and
+                          losers_match["team2"].get("match") == match_num):
+                        db_match_id = losers_template_to_db.get(losers_match["match_id"])
+                        if db_match_id:
+                            losers_match_db = db.query(LosersMatch).filter(
+                                LosersMatch.id == db_match_id
+                            ).first()
+                            if losers_match_db:
+                                losers_match_db.team2_id = match.loser_id
+                                db.add(losers_match_db)
         
         # If this is the final winners bracket match, winner goes to championship
         if match.next_match_id is None:
@@ -319,16 +246,52 @@ class WinnersBracket:
         elif match.next_match_id:
             next_match = db.query(Match).filter(Match.id == match.next_match_id).first()
             if next_match:
-                # Get next match template data
+                # Get template details for next match
                 next_template_id = db_to_template.get(str(next_match.id))
-                if not next_template_id:
-                    raise ValueError("Template mapping not found for next match")
+                template = get_template_for_size(len(tournament.teams))
                 
-                # Place winner in appropriate slot
-                if not next_match.team1_id:
-                    next_match.team1_id = winner_id
-                else:
-                    next_match.team2_id = winner_id
+                # Find the template match
+                _, next_round, next_match_num = parse_match_id(next_template_id)
+                next_match_template = None
+                for match_template in template["rounds"].get(next_round, []):
+                    if match_template["match_id"] == next_template_id:
+                        next_match_template = match_template
+                        break
+                
+                if next_match_template:
+                    # Check which team slot this winner should fill
+                    team1_source = next_match_template["team1"]
+                    team2_source = next_match_template["team2"]
+
+                    # Check team1 slot
+                    if "from" in team1_source and \
+                    team1_source["from"] == template_id:
+                        next_match.team1_id = winner_id
+                    # Check team2 slot
+                    elif "from" in team2_source and \
+                        team2_source["from"] == template_id:
+                        next_match.team2_id = winner_id
+                elif match.next_match_id:
+                    next_match = db.query(Match).filter(Match.id == match.next_match_id).first()
+                    if next_match:
+                        # Get template details for next match
+                        next_template_id = db_to_template.get(str(next_match.id))
+                        template = get_template_for_size(len(tournament.teams))
+                        
+                        # Find the template match
+                        _, next_round, next_match_num = parse_match_id(next_template_id)
+                        next_match_template = None
+                        for match_template in template["rounds"].get(next_round, []):
+                            if match_template["match_id"] == next_template_id:
+                                next_match_template = match_template
+                                break
+                        
+                        if next_match_template:
+                            # Check which team slot this winner should fill
+                            if next_match_template["team1"]["from"] == template_id:
+                                next_match.team1_id = winner_id
+                            elif next_match_template["team2"]["from"] == template_id:
+                                next_match.team2_id = winner_id
         
         db.commit()
         db.refresh(match)

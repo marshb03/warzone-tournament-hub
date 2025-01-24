@@ -1,639 +1,167 @@
 # app/utils/WinnersBracketTemplate.py
 
-# Standard bracket pairings for different tournament sizes (4-32 teams)
-BRACKET_TEMPLATES = {
-    4: {
-        "rounds": {
-            1: [
-                {"match_id": "R1M1", "seeds": (1, 4), "next_match": "R2M1"},
-                {"match_id": "R1M2", "seeds": (2, 3), "next_match": "R2M1"}
-            ],
-            2: [
-                {"match_id": "R2M1", "seeds": ("R1M1", "R1M2"), "next_match": None}  # Finals
-            ]
-        }
-    },
-    5: {
-        "rounds": {
-            1: [
-                {"match_id": "R1M1", "seeds": (4, 5), "next_match": "R2M1"}
-            ],
-            2: [
-                {"match_id": "R2M1", "seeds": (1, "R1M1"), "next_match": "R3M1"},
-                {"match_id": "R2M2", "seeds": (2, 3), "next_match": "R3M1"}
-            ]
-        }
-    },
-    6: {
-        "rounds": {
-            1: [
-                {"match_id": "R1M1", "seeds": (4, 5), "next_match": "R2M1"},
-                {"match_id": "R1M2", "seeds": (3, 6), "next_match": "R2M2"}
-            ],
-            2: [
-                {"match_id": "R2M1", "seeds": (1, "R1M1"), "next_match": "R3M1"},
-                {"match_id": "R2M2", "seeds": (2, "R1M2"), "next_match": "R3M1"}
-            ]
-        }
-    },
-    7: {
-        "rounds": {
-            1: [
-                {"match_id": "R1M1", "seeds": (4, 5), "next_match": "R2M1"},
-                {"match_id": "R1M2", "seeds": (2, 7), "next_match": "R2M2"},
-                {"match_id": "R1M3", "seeds": (3, 6), "next_match": "R2M2"}
-            ],
-            2: [
-                {"match_id": "R2M1", "seeds": (1, "R1M1"), "next_match": "R3M1"},
-                {"match_id": "R2M2", "seeds": ("R1M2", "R1M3"), "next_match": "R3M1"}
-            ]
-        }
-    },
-    8: {
-        "rounds": {
-            1: [
-                {"match_id": "R1M1", "seeds": (1, 8), "next_match": "R2M1"},
-                {"match_id": "R1M2", "seeds": (4, 5), "next_match": "R2M1"},
-                {"match_id": "R1M3", "seeds": (2, 7), "next_match": "R2M2"},
-                {"match_id": "R1M4", "seeds": (3, 6), "next_match": "R2M2"}
-            ],
-            2: [
-                {"match_id": "R2M1", "seeds": ("R1M1", "R1M2"), "next_match": "R3M1"},
-                {"match_id": "R2M2", "seeds": ("R1M3", "R1M4"), "next_match": "R3M1"}
-            ]
-        }
-    },
-    9: {
-        "rounds": {
-            1: [
-                {"match_id": "R1M1", "seeds": (8, 9), "next_match": "R2M1"}
-            ],
-            2: [
-                {"match_id": "R2M1", "seeds": (1, "R1M1"), "next_match": "R3M1"},
-                {"match_id": "R2M2", "seeds": (4, 5), "next_match": "R3M1"},
-                {"match_id": "R2M3", "seeds": (2, 7), "next_match": "R3M2"},
-                {"match_id": "R2M4", "seeds": (3, 6), "next_match": "R3M2"}
-            ]
-        }
-    },
-    10: {
-        "rounds": {
-            1: [
-                {"match_id": "R1M1", "seeds": (8, 9), "next_match": "R2M1"},
-                {"match_id": "R1M2", "seeds": (7, 10), "next_match": "R2M3"}
-            ],
-            2: [
-                {"match_id": "R2M1", "seeds": (1, "R1M1"), "next_match": "R3M1"},
-                {"match_id": "R2M2", "seeds": (4, 5), "next_match": "R3M1"},
-                {"match_id": "R2M3", "seeds": (2, "R1M2"), "next_match": "R3M2"},
-                {"match_id": "R2M4", "seeds": (3, 6), "next_match": "R3M2"}
-            ]
-        }
-    },
-    11: {
-        "rounds": {
-            1: [
-                {"match_id": "R1M1", "seeds": (8, 9), "next_match": "R2M1"},
-                {"match_id": "R1M2", "seeds": (7, 10), "next_match": "R2M3"},
-                {"match_id": "R1M3", "seeds": (6, 11), "next_match": "R2M4"}
-            ],
-            2: [
-                {"match_id": "R2M1", "seeds": (1, "R1M1"), "next_match": "R3M1"},
-                {"match_id": "R2M2", "seeds": (4, 5), "next_match": "R3M1"},
-                {"match_id": "R2M3", "seeds": (2, "R1M2"), "next_match": "R3M2"},
-                {"match_id": "R2M4", "seeds": (3, "R1M3"), "next_match": "R3M2"}
-            ]
-        }
-    },
-    12: {
-        "rounds": {
-            1: [
-                {"match_id": "R1M1", "seeds": (8, 9), "next_match": "R2M1"},
-                {"match_id": "R1M2", "seeds": (5, 12), "next_match": "R2M2"},
-                {"match_id": "R1M3", "seeds": (7, 10), "next_match": "R2M3"},
-                {"match_id": "R1M4", "seeds": (6, 11), "next_match": "R2M4"}
-            ],
-            2: [
-                {"match_id": "R2M1", "seeds": (1, "R1M1"), "next_match": "R3M1"},
-                {"match_id": "R2M2", "seeds": (4, "R1M2"), "next_match": "R3M1"},
-                {"match_id": "R2M3", "seeds": (2, "R1M3"), "next_match": "R3M2"},
-                {"match_id": "R2M4", "seeds": (3, "R1M4"), "next_match": "R3M2"}
-            ]
-        }
-    },
-    13: {
-        "rounds": {
-            1: [
-                {"match_id": "R1M1", "seeds": (8, 9), "next_match": "R2M1"},
-                {"match_id": "R1M2", "seeds": (4, 13), "next_match": "R2M2"},
-                {"match_id": "R1M3", "seeds": (5, 12), "next_match": "R2M2"},
-                {"match_id": "R1M4", "seeds": (7, 10), "next_match": "R2M3"},
-                {"match_id": "R1M5", "seeds": (6, 11), "next_match": "R2M4"}
-            ],
-            2: [
-                {"match_id": "R2M1", "seeds": (1, "R1M1"), "next_match": "R3M1"},
-                {"match_id": "R2M2", "seeds": ("R1M2", "R1M3"), "next_match": "R3M1"},
-                {"match_id": "R2M3", "seeds": (2, "R1M4"), "next_match": "R3M2"},
-                {"match_id": "R2M4", "seeds": (3, "R1M5"), "next_match": "R3M2"}
-            ]
-        }
-    },
-    14: {
-        "rounds": {
-            1: [
-                {"match_id": "R1M1", "seeds": (8, 9), "next_match": "R2M1"},
-                {"match_id": "R1M2", "seeds": (4, 13), "next_match": "R2M2"},
-                {"match_id": "R1M3", "seeds": (5, 12), "next_match": "R2M2"},
-                {"match_id": "R1M4", "seeds": (7, 10), "next_match": "R2M3"},
-                {"match_id": "R1M5", "seeds": (3, 14), "next_match": "R2M4"},
-                {"match_id": "R1M6", "seeds": (6, 11), "next_match": "R2M4"}
-            ],
-            2: [
-                {"match_id": "R2M1", "seeds": (1, "R1M1"), "next_match": "R3M1"},
-                {"match_id": "R2M2", "seeds": ("R1M2", "R1M3"), "next_match": "R3M1"},
-                {"match_id": "R2M3", "seeds": (2, "R1M4"), "next_match": "R3M2"},
-                {"match_id": "R2M4", "seeds": ("R1M5", "R1M6"), "next_match": "R3M2"}
-            ]
-        }
-    },
-    15: {
-        "rounds": {
-            1: [
-                {"match_id": "R1M1", "seeds": (8, 9), "next_match": "R2M1"},
-                {"match_id": "R1M2", "seeds": (4, 13), "next_match": "R2M2"},
-                {"match_id": "R1M3", "seeds": (5, 12), "next_match": "R2M2"},
-                {"match_id": "R1M4", "seeds": (2, 15), "next_match": "R2M3"},
-                {"match_id": "R1M5", "seeds": (7, 10), "next_match": "R2M3"},
-                {"match_id": "R1M6", "seeds": (3, 14), "next_match": "R2M4"},
-                {"match_id": "R1M7", "seeds": (6, 11), "next_match": "R2M4"}
-            ],
-            2: [
-                {"match_id": "R2M1", "seeds": (1, "R1M1"), "next_match": "R3M1"},
-                {"match_id": "R2M2", "seeds": ("R1M2", "R1M3"), "next_match": "R3M1"},
-                {"match_id": "R2M3", "seeds": ("R1M4", "R1M5"), "next_match": "R3M2"},
-                {"match_id": "R2M4", "seeds": ("R1M6", "R1M7"), "next_match": "R3M2"}
-            ]
-        }
-    },
-    16: {
-        "rounds": {
-            1: [
-                {"match_id": "R1M1", "seeds": (1, 16), "next_match": "R2M1"},
-                {"match_id": "R1M2", "seeds": (8, 9), "next_match": "R2M1"},
-                {"match_id": "R1M3", "seeds": (4, 13), "next_match": "R2M2"},
-                {"match_id": "R1M4", "seeds": (5, 12), "next_match": "R2M2"},
-                {"match_id": "R1M5", "seeds": (2, 15), "next_match": "R2M3"},
-                {"match_id": "R1M6", "seeds": (7, 10), "next_match": "R2M3"},
-                {"match_id": "R1M7", "seeds": (3, 14), "next_match": "R2M4"},
-                {"match_id": "R1M8", "seeds": (6, 11), "next_match": "R2M4"}
-            ],
-            2: [
-                {"match_id": "R2M1", "seeds": ("R1M1", "R1M2"), "next_match": "R3M1"},
-                {"match_id": "R2M2", "seeds": ("R1M3", "R1M4"), "next_match": "R3M1"},
-                {"match_id": "R2M3", "seeds": ("R1M5", "R1M6"), "next_match": "R3M2"},
-                {"match_id": "R2M4", "seeds": ("R1M7", "R1M8"), "next_match": "R3M2"}
-            ]
-        }
-    },
-    17: {
-        "rounds": {
-            1: [
-                {"match_id": "R1M1", "seeds": (16, 17), "next_match": "R2M1"}
-            ],
-            2: [
-                {"match_id": "R2M1", "seeds": (1, "R1M1"), "next_match": "R3M1"},
-                {"match_id": "R2M2", "seeds": (8, 9), "next_match": "R3M1"},
-                {"match_id": "R2M3", "seeds": (4, 13), "next_match": "R3M2"},
-                {"match_id": "R2M4", "seeds": (5, 12), "next_match": "R3M2"},
-                {"match_id": "R2M5", "seeds": (2, 15), "next_match": "R3M3"},
-                {"match_id": "R2M6", "seeds": (7, 10), "next_match": "R3M3"},
-                {"match_id": "R2M7", "seeds": (3, 14), "next_match": "R3M4"},
-                {"match_id": "R2M8", "seeds": (6, 11), "next_match": "R3M4"}
-            ]
-        }
-    },
-    18: {
-        "rounds": {
-            1: [
-                {"match_id": "R1M1", "seeds": (16, 17), "next_match": "R2M1"},
-                {"match_id": "R1M2", "seeds": (15, 18), "next_match": "R2M5"}
-            ],
-            2: [
-                {"match_id": "R2M1", "seeds": (1, "R1M1"), "next_match": "R3M1"},
-                {"match_id": "R2M2", "seeds": (8, 9), "next_match": "R3M1"},
-                {"match_id": "R2M3", "seeds": (4, 13), "next_match": "R3M2"},
-                {"match_id": "R2M4", "seeds": (5, 12), "next_match": "R3M2"},
-                {"match_id": "R2M5", "seeds": (2, "R1M2"), "next_match": "R3M3"},
-                {"match_id": "R2M6", "seeds": (7, 10), "next_match": "R3M3"},
-                {"match_id": "R2M7", "seeds": (3, 14), "next_match": "R3M4"},
-                {"match_id": "R2M8", "seeds": (6, 11), "next_match": "R3M4"}
-            ]
-        }
-    },
-    19: {
-        "rounds": {
-            1: [
-                {"match_id": "R1M1", "seeds": (16, 17), "next_match": "R2M1"},
-                {"match_id": "R1M2", "seeds": (15, 18), "next_match": "R2M5"},
-                {"match_id": "R1M3", "seeds": (14, 19), "next_match": "R2M7"}
-            ],
-            2: [
-                {"match_id": "R2M1", "seeds": (1, "R1M1"), "next_match": "R3M1"},
-                {"match_id": "R2M2", "seeds": (8, 9), "next_match": "R3M1"},
-                {"match_id": "R2M3", "seeds": (4, 13), "next_match": "R3M2"},
-                {"match_id": "R2M4", "seeds": (5, 12), "next_match": "R3M2"},
-                {"match_id": "R2M5", "seeds": (2, "R1M2"), "next_match": "R3M3"},
-                {"match_id": "R2M6", "seeds": (7, 10), "next_match": "R3M3"},
-                {"match_id": "R2M7", "seeds": (3, "R1M3"), "next_match": "R3M4"},
-                {"match_id": "R2M8", "seeds": (6, 11), "next_match": "R3M4"}
-            ]
-        }
-    },
-    20: {
-        "rounds": {
-            1: [
-                {"match_id": "R1M1", "seeds": (16, 17), "next_match": "R2M1"},
-                {"match_id": "R1M2", "seeds": (13, 20), "next_match": "R2M3"},
-                {"match_id": "R1M3", "seeds": (15, 18), "next_match": "R2M5"},
-                {"match_id": "R1M4", "seeds": (14, 19), "next_match": "R2M7"}
-            ],
-            2: [
-                {"match_id": "R2M1", "seeds": (1, "R1M1"), "next_match": "R3M1"},
-                {"match_id": "R2M2", "seeds": (8, 9), "next_match": "R3M1"},
-                {"match_id": "R2M3", "seeds": (4, "R1M2"), "next_match": "R3M2"},
-                {"match_id": "R2M4", "seeds": (5, 12), "next_match": "R3M2"},
-                {"match_id": "R2M5", "seeds": (2, "R1M3"), "next_match": "R3M3"},
-                {"match_id": "R2M6", "seeds": (7, 10), "next_match": "R3M3"},
-                {"match_id": "R2M7", "seeds": (3, "R1M4"), "next_match": "R3M4"},
-                {"match_id": "R2M8", "seeds": (6, 11), "next_match": "R3M4"}
-            ]
-        }
-    },
-    21: {
-        "rounds": {
-            1: [
-                {"match_id": "R1M1", "seeds": (16, 17), "next_match": "R2M1"},
-                {"match_id": "R1M2", "seeds": (13, 20), "next_match": "R2M3"},
-                {"match_id": "R1M3", "seeds": (12, 21), "next_match": "R2M4"},
-                {"match_id": "R1M4", "seeds": (15, 18), "next_match": "R2M5"},
-                {"match_id": "R1M5", "seeds": (14, 19), "next_match": "R2M7"}
-            ],
-            2: [
-                {"match_id": "R2M1", "seeds": (1, "R1M1"), "next_match": "R3M1"},
-                {"match_id": "R2M2", "seeds": (8, 9), "next_match": "R3M1"},
-                {"match_id": "R2M3", "seeds": (4, "R1M2"), "next_match": "R3M2"},
-                {"match_id": "R2M4", "seeds": (5, "R1M3"), "next_match": "R3M2"},
-                {"match_id": "R2M5", "seeds": (2, "R1M4"), "next_match": "R3M3"},
-                {"match_id": "R2M6", "seeds": (7, 10), "next_match": "R3M3"},
-                {"match_id": "R2M7", "seeds": (3, "R1M5"), "next_match": "R3M4"},
-                {"match_id": "R2M8", "seeds": (6, 11), "next_match": "R3M4"}
-            ]
-        }
-    },
-    22: {
-        "rounds": {
-            1: [
-                {"match_id": "R1M1", "seeds": (16, 17), "next_match": "R2M1"},
-                {"match_id": "R1M2", "seeds": (13, 20), "next_match": "R2M3"},
-                {"match_id": "R1M3", "seeds": (12, 21), "next_match": "R2M4"},
-                {"match_id": "R1M4", "seeds": (15, 18), "next_match": "R2M5"},
-                {"match_id": "R1M5", "seeds": (14, 19), "next_match": "R2M7"},
-                {"match_id": "R1M6", "seeds": (11, 22), "next_match": "R2M8"}
-            ],
-            2: [
-                {"match_id": "R2M1", "seeds": (1, "R1M1"), "next_match": "R3M1"},
-                {"match_id": "R2M2", "seeds": (8, 9), "next_match": "R3M1"},
-                {"match_id": "R2M3", "seeds": (4, "R1M2"), "next_match": "R3M2"},
-                {"match_id": "R2M4", "seeds": (5, "R1M3"), "next_match": "R3M2"},
-                {"match_id": "R2M5", "seeds": (2, "R1M4"), "next_match": "R3M3"},
-                {"match_id": "R2M6", "seeds": (7, 10), "next_match": "R3M3"},
-                {"match_id": "R2M7", "seeds": (3, "R1M5"), "next_match": "R3M4"},
-                {"match_id": "R2M8", "seeds": (6, "R1M6"), "next_match": "R3M4"}
-            ]
-        }
-    },
-    23: {
-        "rounds": {
-            1: [
-                {"match_id": "R1M1", "seeds": (16, 17), "next_match": "R2M1"},
-                {"match_id": "R1M2", "seeds": (13, 20), "next_match": "R2M3"},
-                {"match_id": "R1M3", "seeds": (12, 21), "next_match": "R2M4"},
-                {"match_id": "R1M4", "seeds": (15, 18), "next_match": "R2M5"},
-                {"match_id": "R1M5", "seeds": (10, 23), "next_match": "R2M6"},
-                {"match_id": "R1M6", "seeds": (14, 19), "next_match": "R2M7"},
-                {"match_id": "R1M7", "seeds": (11, 22), "next_match": "R2M8"}
-            ],
-            2: [
-                {"match_id": "R2M1", "seeds": (1, "R1M1"), "next_match": "R3M1"},
-                {"match_id": "R2M2", "seeds": (8, 9), "next_match": "R3M1"},
-                {"match_id": "R2M3", "seeds": (4, "R1M2"), "next_match": "R3M2"},
-                {"match_id": "R2M4", "seeds": (5, "R1M3"), "next_match": "R3M2"},
-                {"match_id": "R2M5", "seeds": (2, "R1M4"), "next_match": "R3M3"},
-                {"match_id": "R2M6", "seeds": (7, "R1M5"), "next_match": "R3M3"},
-                {"match_id": "R2M7", "seeds": (3, "R1M6"), "next_match": "R3M4"},
-                {"match_id": "R2M8", "seeds": (6, "R1M7"), "next_match": "R3M4"}
-            ]
-        }
-    },
-    24: {
-        "rounds": {
-            1: [
-                {"match_id": "R1M1", "seeds": (16, 17), "next_match": "R2M1"},
-                {"match_id": "R1M2", "seeds": (9, 24), "next_match": "R2M2"},
-                {"match_id": "R1M3", "seeds": (13, 20), "next_match": "R2M3"},
-                {"match_id": "R1M4", "seeds": (12, 21), "next_match": "R2M4"},
-                {"match_id": "R1M5", "seeds": (15, 18), "next_match": "R2M5"},
-                {"match_id": "R1M6", "seeds": (10, 23), "next_match": "R2M6"},
-                {"match_id": "R1M7", "seeds": (14, 19), "next_match": "R2M7"},
-                {"match_id": "R1M8", "seeds": (11, 22), "next_match": "R2M8"}
-            ],
-            2: [
-                {"match_id": "R2M1", "seeds": (1, "R1M1"), "next_match": "R3M1"},
-                {"match_id": "R2M2", "seeds": (8, "R1M2"), "next_match": "R3M1"},
-                {"match_id": "R2M3", "seeds": (4, "R1M3"), "next_match": "R3M2"},
-                {"match_id": "R2M4", "seeds": (5, "R1M4"), "next_match": "R3M2"},
-                {"match_id": "R2M5", "seeds": (2, "R1M5"), "next_match": "R3M3"},
-                {"match_id": "R2M6", "seeds": (7, "R1M6"), "next_match": "R3M3"},
-                {"match_id": "R2M7", "seeds": (3, "R1M7"), "next_match": "R3M4"},
-                {"match_id": "R2M8", "seeds": (6, "R1M8"), "next_match": "R3M4"}
-            ]
-        }
-    },
-    25: {
-        "rounds": {
-            1: [
-                {"match_id": "R1M1", "seeds": (16, 17), "next_match": "R2M1"},
-                {"match_id": "R1M2", "seeds": (8, 25), "next_match": "R2M2"},
-                {"match_id": "R1M3", "seeds": (9, 24), "next_match": "R2M2"},
-                {"match_id": "R1M4", "seeds": (13, 20), "next_match": "R2M3"},
-                {"match_id": "R1M5", "seeds": (12, 21), "next_match": "R2M4"},
-                {"match_id": "R1M6", "seeds": (15, 18), "next_match": "R2M5"},
-                {"match_id": "R1M7", "seeds": (10, 23), "next_match": "R2M6"},
-                {"match_id": "R1M8", "seeds": (14, 19), "next_match": "R2M7"},
-                {"match_id": "R1M9", "seeds": (11, 22), "next_match": "R2M8"}
-            ],
-            2: [
-                {"match_id": "R2M1", "seeds": (1, "R1M1"), "next_match": "R3M1"},
-                {"match_id": "R2M2", "seeds": ("R1M2", "R1M3"), "next_match": "R3M1"},
-                {"match_id": "R2M3", "seeds": (4, "R1M4"), "next_match": "R3M2"},
-                {"match_id": "R2M4", "seeds": (5, "R1M5"), "next_match": "R3M2"},
-                {"match_id": "R2M5", "seeds": (2, "R1M6"), "next_match": "R3M3"},
-                {"match_id": "R2M6", "seeds": (7, "R1M7"), "next_match": "R3M3"},
-                {"match_id": "R2M7", "seeds": (3, "R1M8"), "next_match": "R3M4"},
-                {"match_id": "R2M8", "seeds": (6, "R1M9"), "next_match": "R3M4"}
-            ]
-        }
-    },
-26: {
-        "rounds": {
-            1: [
-                {"match_id": "R1M1", "seeds": (16, 17), "next_match": "R2M1"},
-                {"match_id": "R1M2", "seeds": (8, 25), "next_match": "R2M2"},
-                {"match_id": "R1M3", "seeds": (9, 24), "next_match": "R2M2"},
-                {"match_id": "R1M4", "seeds": (13, 20), "next_match": "R2M3"},
-                {"match_id": "R1M5", "seeds": (12, 21), "next_match": "R2M4"},
-                {"match_id": "R1M6", "seeds": (15, 18), "next_match": "R2M5"},
-                {"match_id": "R1M7", "seeds": (7, 26), "next_match": "R2M6"},
-                {"match_id": "R1M8", "seeds": (10, 23), "next_match": "R2M6"},
-                {"match_id": "R1M9", "seeds": (14, 19), "next_match": "R2M7"},
-                {"match_id": "R1M10", "seeds": (11, 22), "next_match": "R2M8"}
-            ],
-            2: [
-                {"match_id": "R2M1", "seeds": (1, "R1M1"), "next_match": "R3M1"},
-                {"match_id": "R2M2", "seeds": ("R1M2", "R1M3"), "next_match": "R3M1"},
-                {"match_id": "R2M3", "seeds": (4, "R1M4"), "next_match": "R3M2"},
-                {"match_id": "R2M4", "seeds": (5, "R1M5"), "next_match": "R3M2"},
-                {"match_id": "R2M5", "seeds": (2, "R1M6"), "next_match": "R3M3"},
-                {"match_id": "R2M6", "seeds": ("R1M7", "R1M8"), "next_match": "R3M3"},
-                {"match_id": "R2M7", "seeds": (3, "R1M9"), "next_match": "R3M4"},
-                {"match_id": "R2M8", "seeds": (6, "R1M10"), "next_match": "R3M4"}
-            ]
-        }
-    },
-    27: {
-        "rounds": {
-            1: [
-                {"match_id": "R1M1", "seeds": (16, 17), "next_match": "R2M1"},
-                {"match_id": "R1M2", "seeds": (8, 25), "next_match": "R2M2"},
-                {"match_id": "R1M3", "seeds": (9, 24), "next_match": "R2M2"},
-                {"match_id": "R1M4", "seeds": (13, 20), "next_match": "R2M3"},
-                {"match_id": "R1M5", "seeds": (12, 21), "next_match": "R2M4"},
-                {"match_id": "R1M6", "seeds": (15, 18), "next_match": "R2M5"},
-                {"match_id": "R1M7", "seeds": (7, 26), "next_match": "R2M6"},
-                {"match_id": "R1M8", "seeds": (10, 23), "next_match": "R2M6"},
-                {"match_id": "R1M9", "seeds": (14, 19), "next_match": "R2M7"},
-                {"match_id": "R1M10", "seeds": (6, 27), "next_match": "R2M8"},
-                {"match_id": "R1M11", "seeds": (11, 22), "next_match": "R2M8"}
-            ],
-            2: [
-                {"match_id": "R2M1", "seeds": (1, "R1M1"), "next_match": "R3M1"},
-                {"match_id": "R2M2", "seeds": ("R1M2", "R1M3"), "next_match": "R3M1"},
-                {"match_id": "R2M3", "seeds": (4, "R1M4"), "next_match": "R3M2"},
-                {"match_id": "R2M4", "seeds": (5, "R1M5"), "next_match": "R3M2"},
-                {"match_id": "R2M5", "seeds": (2, "R1M6"), "next_match": "R3M3"},
-                {"match_id": "R2M6", "seeds": ("R1M7", "R1M8"), "next_match": "R3M3"},
-                {"match_id": "R2M7", "seeds": (3, "R1M9"), "next_match": "R3M4"},
-                {"match_id": "R2M8", "seeds": ("R1M10", "R1M11"), "next_match": "R3M4"}
-            ]
-        }
-    },
-    28: {
-        "rounds": {
-            1: [
-                {"match_id": "R1M1", "seeds": (16, 17), "next_match": "R2M1"},
-                {"match_id": "R1M2", "seeds": (8, 25), "next_match": "R2M2"},
-                {"match_id": "R1M3", "seeds": (9, 24), "next_match": "R2M2"},
-                {"match_id": "R1M4", "seeds": (13, 20), "next_match": "R2M3"},
-                {"match_id": "R1M5", "seeds": (5, 28), "next_match": "R2M4"},
-                {"match_id": "R1M6", "seeds": (12, 21), "next_match": "R2M4"},
-                {"match_id": "R1M7", "seeds": (15, 18), "next_match": "R2M5"},
-                {"match_id": "R1M8", "seeds": (7, 26), "next_match": "R2M6"},
-                {"match_id": "R1M9", "seeds": (10, 23), "next_match": "R2M6"},
-                {"match_id": "R1M10", "seeds": (14, 19), "next_match": "R2M7"},
-                {"match_id": "R1M11", "seeds": (6, 27), "next_match": "R2M8"},
-                {"match_id": "R1M12", "seeds": (11, 22), "next_match": "R2M8"}
-            ],
-            2: [
-                {"match_id": "R2M1", "seeds": (1, "R1M1"), "next_match": "R3M1"},
-                {"match_id": "R2M2", "seeds": ("R1M2", "R1M3"), "next_match": "R3M1"},
-                {"match_id": "R2M3", "seeds": (4, "R1M4"), "next_match": "R3M2"},
-                {"match_id": "R2M4", "seeds": ("R1M5", "R1M6"), "next_match": "R3M2"},
-                {"match_id": "R2M5", "seeds": (2, "R1M7"), "next_match": "R3M3"},
-                {"match_id": "R2M6", "seeds": ("R1M8", "R1M9"), "next_match": "R3M3"},
-                {"match_id": "R2M7", "seeds": (3, "R1M10"), "next_match": "R3M4"},
-                {"match_id": "R2M8", "seeds": ("R1M11", "R1M12"), "next_match": "R3M4"}
-            ]
-        }
-    },
-    29: {
-        "rounds": {
-            1: [
-                {"match_id": "R1M1", "seeds": (16, 17), "next_match": "R2M1"},
-                {"match_id": "R1M2", "seeds": (8, 25), "next_match": "R2M2"},
-                {"match_id": "R1M3", "seeds": (9, 24), "next_match": "R2M2"},
-                {"match_id": "R1M4", "seeds": (4, 29), "next_match": "R2M3"},
-                {"match_id": "R1M5", "seeds": (13, 20), "next_match": "R2M3"},
-                {"match_id": "R1M6", "seeds": (5, 28), "next_match": "R2M4"},
-                {"match_id": "R1M7", "seeds": (12, 21), "next_match": "R2M4"},
-                {"match_id": "R1M8", "seeds": (15, 18), "next_match": "R2M5"},
-                {"match_id": "R1M9", "seeds": (7, 26), "next_match": "R2M6"},
-                {"match_id": "R1M10", "seeds": (10, 23), "next_match": "R2M6"},
-                {"match_id": "R1M11", "seeds": (14, 19), "next_match": "R2M7"},
-                {"match_id": "R1M12", "seeds": (6, 27), "next_match": "R2M8"},
-                {"match_id": "R1M13", "seeds": (11, 22), "next_match": "R2M8"}
-            ],
-            2: [
-                {"match_id": "R2M1", "seeds": (1, "R1M1"), "next_match": "R3M1"},
-                {"match_id": "R2M2", "seeds": ("R1M2", "R1M3"), "next_match": "R3M1"},
-                {"match_id": "R2M3", "seeds": ("R1M4", "R1M5"), "next_match": "R3M2"},
-                {"match_id": "R2M4", "seeds": ("R1M6", "R1M7"), "next_match": "R3M2"},
-                {"match_id": "R2M5", "seeds": (2, "R1M8"), "next_match": "R3M3"},
-                {"match_id": "R2M6", "seeds": ("R1M9", "R1M10"), "next_match": "R3M3"},
-                {"match_id": "R2M7", "seeds": (3, "R1M11"), "next_match": "R3M4"},
-                {"match_id": "R2M8", "seeds": ("R1M12", "R1M13"), "next_match": "R3M4"}
-            ]
-        }
-    },
-    30: {
-        "rounds": {
-            1: [
-                {"match_id": "R1M1", "seeds": (16, 17), "next_match": "R2M1"},
-                {"match_id": "R1M2", "seeds": (8, 25), "next_match": "R2M2"},
-                {"match_id": "R1M3", "seeds": (9, 24), "next_match": "R2M2"},
-                {"match_id": "R1M4", "seeds": (4, 29), "next_match": "R2M3"},
-                {"match_id": "R1M5", "seeds": (13, 20), "next_match": "R2M3"},
-                {"match_id": "R1M6", "seeds": (5, 28), "next_match": "R2M4"},
-                {"match_id": "R1M7", "seeds": (12, 21), "next_match": "R2M4"},
-                {"match_id": "R1M8", "seeds": (15, 18), "next_match": "R2M5"},
-                {"match_id": "R1M9", "seeds": (7, 26), "next_match": "R2M6"},
-                {"match_id": "R1M10", "seeds": (10, 23), "next_match": "R2M6"},
-                {"match_id": "R1M11", "seeds": (3, 30), "next_match": "R2M7"},
-                {"match_id": "R1M12", "seeds": (14, 19), "next_match": "R2M7"},
-                {"match_id": "R1M13", "seeds": (6, 27), "next_match": "R2M8"},
-                {"match_id": "R1M14", "seeds": (11, 22), "next_match": "R2M8"}
-            ],
-            2: [
-                {"match_id": "R2M1", "seeds": (1, "R1M1"), "next_match": "R3M1"},
-                {"match_id": "R2M2", "seeds": ("R1M2", "R1M3"), "next_match": "R3M1"},
-                {"match_id": "R2M3", "seeds": ("R1M4", "R1M5"), "next_match": "R3M2"},
-                {"match_id": "R2M4", "seeds": ("R1M6", "R1M7"), "next_match": "R3M2"},
-                {"match_id": "R2M5", "seeds": (2, "R1M8"), "next_match": "R3M3"},
-                {"match_id": "R2M6", "seeds": ("R1M9", "R1M10"), "next_match": "R3M3"},
-                {"match_id": "R2M7", "seeds": ("R1M11", "R1M12"), "next_match": "R3M4"},
-                {"match_id": "R2M8", "seeds": ("R1M13", "R1M14"), "next_match": "R3M4"}
-            ]
-        }
-    },
-31: {
-        "rounds": {
-            1: [
-                {"match_id": "R1M1", "seeds": (16, 17), "next_match": "R2M1"},
-                {"match_id": "R1M2", "seeds": (8, 25), "next_match": "R2M2"},
-                {"match_id": "R1M3", "seeds": (9, 24), "next_match": "R2M2"},
-                {"match_id": "R1M4", "seeds": (4, 29), "next_match": "R2M3"},
-                {"match_id": "R1M5", "seeds": (13, 20), "next_match": "R2M3"},
-                {"match_id": "R1M6", "seeds": (5, 28), "next_match": "R2M4"},
-                {"match_id": "R1M7", "seeds": (12, 21), "next_match": "R2M4"},
-                {"match_id": "R1M8", "seeds": (2, 31), "next_match": "R2M5"},
-                {"match_id": "R1M9", "seeds": (15, 18), "next_match": "R2M5"},
-                {"match_id": "R1M10", "seeds": (7, 26), "next_match": "R2M6"},
-                {"match_id": "R1M11", "seeds": (10, 23), "next_match": "R2M6"},
-                {"match_id": "R1M12", "seeds": (3, 30), "next_match": "R2M7"},
-                {"match_id": "R1M13", "seeds": (14, 19), "next_match": "R2M7"},
-                {"match_id": "R1M14", "seeds": (6, 27), "next_match": "R2M8"},
-                {"match_id": "R1M15", "seeds": (11, 22), "next_match": "R2M8"}
-            ],
-            2: [
-                {"match_id": "R2M1", "seeds": (1, "R1M1"), "next_match": "R3M1"},
-                {"match_id": "R2M2", "seeds": ("R1M2", "R1M3"), "next_match": "R3M1"},
-                {"match_id": "R2M3", "seeds": ("R1M4", "R1M5"), "next_match": "R3M2"},
-                {"match_id": "R2M4", "seeds": ("R1M6", "R1M7"), "next_match": "R3M2"},
-                {"match_id": "R2M5", "seeds": ("R1M8", "R1M9"), "next_match": "R3M3"},
-                {"match_id": "R2M6", "seeds": ("R1M10", "R1M11"), "next_match": "R3M3"},
-                {"match_id": "R2M7", "seeds": ("R1M12", "R1M13"), "next_match": "R3M4"},
-                {"match_id": "R2M8", "seeds": ("R1M14", "R1M15"), "next_match": "R3M4"}
-            ]
-        }
-    },
-    32: {
-        "rounds": {
-            1: [
-                {"match_id": "R1M1", "seeds": (1, 32), "next_match": "R2M1"},
-                {"match_id": "R1M2", "seeds": (16, 17), "next_match": "R2M1"},
-                {"match_id": "R1M3", "seeds": (8, 25), "next_match": "R2M2"},
-                {"match_id": "R1M4", "seeds": (9, 24), "next_match": "R2M2"},
-                {"match_id": "R1M5", "seeds": (4, 29), "next_match": "R2M3"},
-                {"match_id": "R1M6", "seeds": (13, 20), "next_match": "R2M3"},
-                {"match_id": "R1M7", "seeds": (5, 28), "next_match": "R2M4"},
-                {"match_id": "R1M8", "seeds": (12, 21), "next_match": "R2M4"},
-                {"match_id": "R1M9", "seeds": (2, 31), "next_match": "R2M5"},
-                {"match_id": "R1M10", "seeds": (15, 18), "next_match": "R2M5"},
-                {"match_id": "R1M11", "seeds": (7, 26), "next_match": "R2M6"},
-                {"match_id": "R1M12", "seeds": (10, 23), "next_match": "R2M6"},
-                {"match_id": "R1M13", "seeds": (3, 30), "next_match": "R2M7"},
-                {"match_id": "R1M14", "seeds": (14, 19), "next_match": "R2M7"},
-                {"match_id": "R1M15", "seeds": (6, 27), "next_match": "R2M8"},
-                {"match_id": "R1M16", "seeds": (11, 22), "next_match": "R2M8"}
-            ],
-            2: [
-                {"match_id": "R2M1", "seeds": ("R1M1", "R1M2"), "next_match": "R3M1"},
-                {"match_id": "R2M2", "seeds": ("R1M3", "R1M4"), "next_match": "R3M1"},
-                {"match_id": "R2M3", "seeds": ("R1M5", "R1M6"), "next_match": "R3M2"},
-                {"match_id": "R2M4", "seeds": ("R1M7", "R1M8"), "next_match": "R3M2"},
-                {"match_id": "R2M5", "seeds": ("R1M9", "R1M10"), "next_match": "R3M3"},
-                {"match_id": "R2M6", "seeds": ("R1M11", "R1M12"), "next_match": "R3M3"},
-                {"match_id": "R2M7", "seeds": ("R1M13", "R1M14"), "next_match": "R3M4"},
-                {"match_id": "R2M8", "seeds": ("R1M15", "R1M16"), "next_match": "R3M4"}
-            ]
-        }
-    }
-}
-
-# app/utils/WinnersBracketTemplate.py
-
 from typing import Tuple, Optional, List, Dict, Union
 import re
 
+# Import all early rounds templates
+from .winners_early_rounds_templates.early_rounds_4_8 import (
+    EARLY_ROUNDS as EARLY_ROUNDS_4_8,
+    get_matches_for_size as get_early_matches_4_8
+)
+from .winners_early_rounds_templates.early_rounds_9_12 import (
+    EARLY_ROUNDS as EARLY_ROUNDS_9_12,
+    get_matches_for_size as get_early_matches_9_12
+)
+from .winners_early_rounds_templates.early_rounds_13_16 import (
+    EARLY_ROUNDS as EARLY_ROUNDS_13_16,
+    get_matches_for_size as get_early_matches_13_16
+)
+from .winners_early_rounds_templates.early_rounds_17_20 import (
+    EARLY_ROUNDS as EARLY_ROUNDS_17_20,
+    get_matches_for_size as get_early_matches_17_20
+)
+from .winners_early_rounds_templates.early_rounds_21_24 import (
+    EARLY_ROUNDS as EARLY_ROUNDS_21_24,
+    get_matches_for_size as get_early_matches_21_24
+)
+from .winners_early_rounds_templates.early_rounds_25_28 import (
+    EARLY_ROUNDS as EARLY_ROUNDS_25_28,
+    get_matches_for_size as get_early_matches_25_28
+)
+from .winners_early_rounds_templates.early_rounds_29_32 import (
+    EARLY_ROUNDS as EARLY_ROUNDS_29_32,
+    get_matches_for_size as get_early_matches_29_32
+)
+
+# Import all later rounds templates
+from .winners_later_rounds_templates.later_rounds_5_8 import (
+    LATER_ROUNDS as LATER_ROUNDS_5_8,
+    get_later_rounds_template as get_later_template_5_8
+)
+from .winners_later_rounds_templates.later_rounds_9_16 import (
+    LATER_ROUNDS as LATER_ROUNDS_9_16,
+    get_later_rounds_template as get_later_template_9_16
+)
+from .winners_later_rounds_templates.later_rounds_17_32 import (
+    LATER_ROUNDS as LATER_ROUNDS_17_32,
+    get_later_rounds_template as get_later_template_17_32
+)
+
+# Combine early rounds templates
+EARLY_ROUNDS = {
+    **EARLY_ROUNDS_4_8,
+    **EARLY_ROUNDS_9_12,
+    **EARLY_ROUNDS_13_16,
+    **EARLY_ROUNDS_17_20,
+    **EARLY_ROUNDS_21_24,
+    **EARLY_ROUNDS_25_28,
+    **EARLY_ROUNDS_29_32
+}
+
 def parse_match_id(match_id: str) -> Tuple[str, int, int]:
     """
-    Convert match ID into bracket, round and match numbers.
-    Handles both prefixed (e.g., 'W-R1M1') and unprefixed (e.g., 'R1M1') formats.
+    Parse a match ID into its components.
     
     Args:
-        match_id: String in format '[W/L]-R{round}M{match}' or 'R{round}M{match}'
+        match_id: String in format 'R{round}M{match}' (e.g., 'R1M1')
         
     Returns:
         Tuple of (bracket, round_number, match_number)
+        
+    Example:
+        'R1M1' -> ('W', 1, 1)
     """
-    # Try prefixed format first
-    prefixed_match = re.match(r'([WL])-R(\d+)M(\d+)', match_id)
-    if prefixed_match:
-        return (prefixed_match.group(1), int(prefixed_match.group(2)), int(prefixed_match.group(3)))
-    
-    # Try unprefixed format
-    unprefixed_match = re.match(r'R(\d+)M(\d+)', match_id)
-    if unprefixed_match:
-        return ('W', int(unprefixed_match.group(1)), int(unprefixed_match.group(2)))
-    
-    raise ValueError(f"Invalid match ID format: {match_id}")
+    match = re.match(r'R(\d+)M(\d+)', match_id)
+    if not match:
+        raise ValueError(f"Invalid match ID format: {match_id}")
+    return ('W', int(match.group(1)), int(match.group(2)))
 
-def get_match_by_id(tournament_size: int, match_id: str) -> Optional[dict]:
+def get_team_source_details(team_source: Dict) -> Dict:
     """
-    Get match details by its ID.
+    Get standardized details about a team's source.
+    
+    Args:
+        team_source: Team source dictionary from template
+        
+    Returns:
+        Dict with source information
+    """
+    if "seed" in team_source:
+        return {
+            "type": "seed",
+            "seed": team_source["seed"]
+        }
+    else:
+        return {
+            "type": "match",
+            "from": team_source["from"],
+            "round": team_source["round"],
+            "match": team_source["match"]
+        }
+
+def get_later_rounds_template(tournament_size: int) -> dict:
+    """Get the later rounds template for a given tournament size."""
+    if 5 <= tournament_size <= 8:
+        return get_later_template_5_8()
+    elif 9 <= tournament_size <= 16:
+        return get_later_template_9_16()
+    elif 17 <= tournament_size <= 32:
+        return get_later_template_17_32()
+    else:
+        raise ValueError(f"No later rounds template available for {tournament_size} teams")
+
+def get_early_rounds_template(tournament_size: int) -> dict:
+    """Get the early rounds template for a given tournament size."""
+    if 4 <= tournament_size <= 8:
+        return get_early_matches_4_8(tournament_size)
+    elif 9 <= tournament_size <= 12:
+        return get_early_matches_9_12(tournament_size)
+    elif 13 <= tournament_size <= 16:
+        return get_early_matches_13_16(tournament_size)
+    elif 17 <= tournament_size <= 20:
+        return get_early_matches_17_20(tournament_size)
+    elif 21 <= tournament_size <= 24:
+        return get_early_matches_21_24(tournament_size)
+    elif 25 <= tournament_size <= 28:
+        return get_early_matches_25_28(tournament_size)
+    elif 29 <= tournament_size <= 32:
+        return get_early_matches_29_32(tournament_size)
+    else:
+        raise ValueError(f"No template exists for {tournament_size} teams")
+
+def get_template_for_size(tournament_size: int) -> Dict:
+    """
+    Get the complete template for a given tournament size.
     
     Args:
         tournament_size: Number of teams in tournament
-        match_id: String in format 'R{round}M{match}' (e.g., 'R1M1')
+        
+    Returns:
+        Dict containing both early and later rounds if applicable
+    """
+    # Get early rounds template
+    template = get_early_rounds_template(tournament_size)
+    
+    # Add later rounds if tournament size > 4
+    if tournament_size >= 5:
+        later_template = get_later_rounds_template(tournament_size)
+        template["rounds"].update(later_template["rounds"])
+    
+    return template
+
+def get_match_details(tournament_size: int, match_id: str) -> Optional[Dict]:
+    """
+    Get full details for a specific match.
+    
+    Args:
+        tournament_size: Number of teams in tournament
+        match_id: Match ID to look up
         
     Returns:
         Match dictionary if found, None otherwise
     """
-    if tournament_size not in BRACKET_TEMPLATES:
-        return None
-        
-    # Get the round number from the match ID
-    _, round_num, _ = parse_match_id(match_id)  # Now properly unpacking all three values
-    template = BRACKET_TEMPLATES[tournament_size]
+    template = get_template_for_size(tournament_size)
+    _, round_num, _ = parse_match_id(match_id)
     
     if round_num not in template["rounds"]:
         return None
@@ -641,107 +169,46 @@ def get_match_by_id(tournament_size: int, match_id: str) -> Optional[dict]:
     for match in template["rounds"][round_num]:
         if match["match_id"] == match_id:
             return match
-    
+            
     return None
 
-def get_next_match_id(tournament_size: int, match_id: str) -> Optional[str]:
-    """
-    Get the next match ID for a given match.
-    
-    Args:
-        tournament_size: Number of teams in tournament
-        match_id: String in format 'R{round}M{match}' (e.g., 'R1M1')
-        
-    Returns:
-        Next match ID if found, None otherwise
-    """
-    match = get_match_by_id(tournament_size, match_id)
-    return match["next_match"] if match else None
-
-def get_matches_feeding_into(tournament_size: int, target_match_id: str) -> List[str]:
-    """
-    Get list of match IDs that feed into a given match.
-    
-    Args:
-        tournament_size: Number of teams in tournament
-        target_match_id: String in format 'R{round}M{match}' (e.g., 'R2M1')
-        
-    Returns:
-        List of match IDs that feed into the target match
-    """
-    feeding_matches = []
-    target_round, _ = parse_match_id(target_match_id)
-    
-    if target_round <= 1 or tournament_size not in BRACKET_TEMPLATES:
-        return []
-        
-    # Look in previous round for matches that feed into this one
-    prev_round = target_round - 1
-    if prev_round in BRACKET_TEMPLATES[tournament_size]["rounds"]:
-        for match in BRACKET_TEMPLATES[tournament_size]["rounds"][prev_round]:
-            if match["next_match"] == target_match_id:
-                feeding_matches.append(match["match_id"])
-                
-    return feeding_matches
-
-def get_seeds_for_match(tournament_size: int, match_id: str) -> Tuple[Union[int, str], Union[int, str]]:
-    """
-    Get the seeds or winner references for a match.
-    
-    Args:
-        tournament_size: Number of teams in tournament
-        match_id: String in format 'R{round}M{match}' (e.g., 'R1M1')
-        
-    Returns:
-        Tuple of (seed1, seed2) where each can be either an integer (direct seed)
-        or string (reference to previous match winner)
-        
-    Raises:
-        ValueError: If match not found
-    """
-    match = get_match_by_id(tournament_size, match_id)
-    if not match:
-        raise ValueError(f"Match {match_id} not found for {tournament_size} team tournament")
-    return match["seeds"]
-
-def validate_match_id(match_id: str) -> bool:
-    """
-    Validate that a match ID follows the correct format.
-    
-    Args:
-        match_id: String to validate
-        
-    Returns:
-        True if valid format, False otherwise
-    """
-    pattern = r'^R\d+M\d+$'
-    return bool(re.match(pattern, match_id))
-
-def is_winner_reference(seed: Union[int, str]) -> bool:
-    """
-    Check if a seed value is a winner reference.
-    
-    Args:
-        seed: Either an integer (direct seed) or string (winner reference)
-        
-    Returns:
-        True if seed is a winner reference, False if direct seed
-    """
-    return isinstance(seed, str) and validate_match_id(seed)
-
-def get_round_matches(tournament_size: int, round_number: int) -> List[dict]:
+def get_round_matches(tournament_size: int, round_number: int) -> List[Dict]:
     """
     Get all matches for a specific round.
     
     Args:
         tournament_size: Number of teams in tournament
-        round_number: Round to get matches for
+        round_number: Round number to get
         
     Returns:
-        List of match dictionaries for the specified round
+        List of match dictionaries for that round
     """
-    if tournament_size not in BRACKET_TEMPLATES:
-        return []
-        
-    template = BRACKET_TEMPLATES[tournament_size]
+    template = get_template_for_size(tournament_size)
     return template["rounds"].get(round_number, [])
+
+def get_next_match_id(tournament_size: int, match_id: str) -> Optional[str]:
+    """
+    Get the next match ID in progression.
+    
+    Args:
+        tournament_size: Number of teams in tournament
+        match_id: Current match ID
+        
+    Returns:
+        Next match ID if it exists, None otherwise
+    """
+    match = get_match_details(tournament_size, match_id)
+    return match["next_match"] if match else None
+
+def is_seed_reference(source: Dict) -> bool:
+    """Check if a team source is a direct seed reference."""
+    return "seed" in source
+
+def is_match_reference(source: Dict) -> bool:
+    """Check if a team source is a match reference."""
+    return "from" in source and "round" in source and "match" in source
+
+def validate_match_id(match_id: str) -> bool:
+    """Validate match ID format."""
+    pattern = r'^R\d+M\d+$'
+    return bool(re.match(pattern, match_id))

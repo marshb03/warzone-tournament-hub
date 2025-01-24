@@ -6,14 +6,15 @@ from app.schemas.match import MatchUpdate
 from fastapi import HTTPException
 from sqlalchemy import func
 import logging
-logging.basicConfig(
-    filename='tournament_debug.log',
-    level=logging.DEBUG,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 def get_match(db: Session, match_id: int):
-    return db.query(LosersMatch).filter(LosersMatch.id == match_id).first()
+    logger.debug(f"Looking up losers match with ID: {match_id}")
+    match = db.query(LosersMatch).filter(LosersMatch.id == match_id).first()
+    logger.debug(f"Found losers match: {match}")
+    return match
 
 def get_matches_by_tournament(db: Session, tournament_id: int):
     return db.query(LosersMatch)\
@@ -23,8 +24,8 @@ def get_matches_by_tournament(db: Session, tournament_id: int):
 
 def update_match(db: Session, match_id: int, match_update: MatchUpdate):
     """
-    Update a losers bracket match with the winner and handle progression
-    to the next round if applicable.
+    Update a losers bracket match with winner.
+    Progression logic is handled by BracketGenerator.
     """
     match = get_match(db, match_id=match_id)
     if not match:
@@ -36,42 +37,8 @@ def update_match(db: Session, match_id: int, match_update: MatchUpdate):
             detail="Winner must be one of the teams in the match"
         )
 
-    # Update winner
+    # Update winner only
     match.winner_id = match_update.winner_id
-    db.flush()  # Flush to ensure winner_id is set
-
-    # Get the highest round number in losers bracket for this tournament
-    max_round = db.query(func.max(LosersMatch.round))\
-        .filter(LosersMatch.tournament_id == match.tournament_id)\
-        .scalar()
-
-    # Check if this is the final losers bracket match
-    if match.round == max_round and match.match_number == 101:
-        logging.debug(f"Processing final losers match. Winner: {match_update.winner_id}")
-        # Get championship match
-        championship_match = db.query(Match).filter(
-            Match.tournament_id == match.tournament_id,
-            Match.round == 98,
-            Match.match_number == 201
-        ).first()
-
-        if championship_match:
-            logging.debug(f"Found championship match. Current state: team1_id={championship_match.team1_id}, team2_id={championship_match.team2_id}")
-            # Update championship match with losers bracket winner
-            championship_match.team2_id = match_update.winner_id
-            db.flush()
-            logging.debug(f"Updated championship match. New state: team1_id={championship_match.team1_id}, team2_id={championship_match.team2_id}")
-
-    # Handle progression to next match if it exists
-    elif match.next_match_id:
-        next_match = get_match(db, match_id=match.next_match_id)
-        if next_match:
-            # Place winner in appropriate position
-            if not next_match.team1_id:
-                next_match.team1_id = match_update.winner_id
-            else:
-                next_match.team2_id = match_update.winner_id
-
     db.commit()
     db.refresh(match)
     return match

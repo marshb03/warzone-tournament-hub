@@ -1,7 +1,7 @@
 // src/routes/index.jsx
 import { Routes, Route } from 'react-router-dom';
 import { ProtectedRoute } from '../components/auth/ProtectedRoute';
-import SuperuserRoute from '../components/auth/SuperuserRoute';
+import { SuperAdminRoute, HostRoute } from '../components/auth/RoleBasedRoutes';
 import ForgotPasswordForm from '../components/auth/ForgotPasswordForm';
 import ResetPasswordForm from '../components/auth/ResetPasswordForm';
 
@@ -17,26 +17,31 @@ import Login from '../pages/auth/Login';
 import Register from '../pages/auth/Register';
 import NotFound from '../pages/NotFound';
 
-// Admin/Superuser pages (you'll need to create these)
+// Admin/Superuser pages
 import TournamentManagement from '../pages/admin/TournamentManagement';
 import UserManagement from '../pages/admin/UserManagement';
 import AdminDashboard from '../pages/admin/AdminDashboard';
 import CreateTournament from '../pages/admin/CreateTournament';
+
+//Host pages
+import HostDashboard from '../pages/host/HostDashboard';
+import HostTournaments from '../pages/host/HostTournaments';
 
 const AppRoutes = () => {
   return (
     <Routes>
       {/* Public Routes */}
       <Route path="/" element={<Home />} />
-      <Route path="/tournaments" element={<Tournaments />} />
-      <Route path="/tournaments/:id" element={<TournamentDetail />} />
-      <Route path="/results" element={<Results />} />
-      <Route path="/team-generator" element={<TeamGenerator />} />
-      <Route path="/rankings" element={<PlayerRankings />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPasswordForm />} />
       <Route path="/reset-password/:token" element={<ResetPasswordForm />} />
+      
+      {/* View-only Routes (no auth required) */}
+      <Route path="/tournaments" element={<Tournaments />} />
+      <Route path="/tournaments/:id" element={<TournamentDetail />} />
+      <Route path="/results" element={<Results />} />
+      <Route path="/rankings" element={<PlayerRankings />} />
 
       {/* Protected Routes (require login) */}
       <Route path="/profile" element={
@@ -44,27 +49,46 @@ const AppRoutes = () => {
           <Profile />
         </ProtectedRoute>
       } />
-      <Route path="/admin/tournaments/new" element={
-        <SuperuserRoute>
+      
+      {/* Host & Super Admin Routes */}
+      <Route path="/tournaments/new" element={
+        <HostRoute>
           <CreateTournament />
-        </SuperuserRoute>
+        </HostRoute>
+      } />
+      <Route path="/team-generator" element={
+        <HostRoute>
+          <TeamGenerator />
+        </HostRoute>
       } />
       
-      {/* Superuser/Admin Routes */}
+      {/* Super Admin Only Routes */}
       <Route path="/admin" element={
-        <SuperuserRoute>
+        <SuperAdminRoute>
           <AdminDashboard />
-        </SuperuserRoute>
-      } />
-      <Route path="/admin/tournaments" element={
-        <SuperuserRoute>
-          <TournamentManagement />
-        </SuperuserRoute>
+        </SuperAdminRoute>
       } />
       <Route path="/admin/users" element={
-        <SuperuserRoute>
+        <SuperAdminRoute>
           <UserManagement />
-        </SuperuserRoute>
+        </SuperAdminRoute>
+      } />
+      <Route path="/admin/tournaments" element={
+        <SuperAdminRoute>
+          <TournamentManagement />
+        </SuperAdminRoute>
+      } />
+
+      {/* Host Only Routes */}
+      <Route path="/host" element={
+        <HostRoute>
+          <HostDashboard />
+        </HostRoute>
+      } />
+      <Route path="/host/tournaments" element={
+        <HostRoute>
+          <HostTournaments />
+        </HostRoute>
       } />
       
       {/* Catch all route */}

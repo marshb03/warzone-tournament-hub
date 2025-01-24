@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, X, Edit2, Trash2 } from 'lucide-react';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
+import { useAuth } from '../../context/AuthContext';
+import { UserRole } from '../../types/user';
 import api from '../../services/api';
 
 const TeamCard = ({ team, onEdit, onDelete, canManage }) => (
@@ -34,13 +36,22 @@ const TeamCard = ({ team, onEdit, onDelete, canManage }) => (
   </div>
 );
 
-const TeamList = ({ tournamentId, canManage = false }) => {
+const TeamList = ({ tournamentId, tournament }) => {
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTeam, setEditingTeam] = useState(null);
   const [teamName, setTeamName] = useState('');
+  const { user } = useAuth();
+
+  const canManageTeams = user && (
+    user.role === UserRole.SUPER_ADMIN || 
+    (user.role === UserRole.HOST && tournament?.creator_id === user.id)
+);
+
+// Only show team management options if user has permissions and tournament is PENDING
+const showManagement = canManageTeams && tournament?.status === 'PENDING';
 
   const fetchTeams = useCallback(async () => {
     try {
@@ -110,19 +121,19 @@ const TeamList = ({ tournamentId, canManage = false }) => {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">Teams</h2>
-        {canManage && (
-          <Button
-            variant="primary"
-            onClick={handleAddTeam}
-            className="flex items-center"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Team
-          </Button>
-        )}
-      </div>
+        <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold">Teams</h2>
+            {showManagement && (
+                <Button
+                    variant="primary"
+                    onClick={handleAddTeam}
+                    className="flex items-center"
+                >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Team
+                </Button>
+            )}
+        </div>
 
       {error && (
         <div className="bg-red-500/10 text-red-500 p-3 rounded-lg mb-4">
@@ -136,7 +147,7 @@ const TeamList = ({ tournamentId, canManage = false }) => {
             <TeamCard
               key={team.id}
               team={team}
-              canManage={canManage}
+              canManage={canManageTeams}
               onEdit={handleEditTeam}
               onDelete={handleDeleteTeam}
             />

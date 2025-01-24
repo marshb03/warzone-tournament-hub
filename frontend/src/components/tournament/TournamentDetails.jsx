@@ -4,6 +4,7 @@ import { Edit2 } from 'lucide-react';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import { useAuth } from '../../context/AuthContext'; // For user context
+import { UserRole } from '../../types/user';
 
 const TournamentDetails = ({ tournament, onUpdate, canManage }) => {
     const { user } = useAuth(); // Get user from auth context
@@ -30,7 +31,10 @@ const TournamentDetails = ({ tournament, onUpdate, canManage }) => {
       };
   
     // Only show edit button if user is tournament creator
-    const canEdit = canManage && tournament.creator_id === user?.id;
+    const canEdit = canManage && (
+        user?.role === UserRole.SUPER_ADMIN || 
+        (user?.role === UserRole.HOST && tournament.creator_id === user?.id)
+    );
   
     return (
       <Card className="p-6">

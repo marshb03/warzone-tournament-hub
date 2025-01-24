@@ -151,45 +151,35 @@ class LosersBracket:
     def update_match(match_id: int, winner_id: int, db: Session) -> Optional[LosersMatch]:
         """
         Update a losers bracket match with its winner and handle progression.
-        
-        Args:
-            match_id: ID of the match being updated
-            winner_id: ID of the winning team
-            db: Database session
-            
-        Returns:
-            Updated LosersMatch object
-            
-        Raises:
-            ValueError: If match not found, winner invalid, or template mapping missing
         """
         match = db.query(LosersMatch).filter(LosersMatch.id == match_id).first()
         if not match:
             raise ValueError(f"Match with id {match_id} not found")
-            
+                
         # Get tournament and template mappings
         tournament = db.query(Tournament).filter(Tournament.id == match.tournament_id).first()
         if not tournament or not tournament.bracket_config:
             raise ValueError("Tournament configuration not found")
-            
-        # Get mappings from tournament config
+                
+        # Get losers bracket mappings
         losers_config = tournament.bracket_config.get('losers', {})
         db_to_template = losers_config.get('db_to_template_map', {})
+        template_id = db_to_template.get(str(match.id))
         
-        # Get current match template ID
-        template_id = db_to_template.get(str(match_id))
         if not template_id:
             raise ValueError(f"Template mapping not found for match {match_id}")
-            
+                
         # Validate winner is part of match
         if winner_id not in [match.team1_id, match.team2_id]:
             raise ValueError("Winner must be one of the teams in the match")
-            
+                
         # Update winner
         match.winner_id = winner_id
         
-        # Get max round for this tournament size
+        # Get template for this tournament size
         template = get_template_for_size(len(tournament.teams))
+        
+        # Get max round for this tournament size
         max_round = max(template["rounds"].keys())
         
         # Check if this is the final losers match (advances to championship)
@@ -206,15 +196,21 @@ class LosersBracket:
                 
             # Update championship match with losers bracket winner
             championship_match.team2_id = winner_id
-            
+                
         # Handle normal progression if there's a next match
         elif match.next_match_id:
             next_match = db.query(LosersMatch).filter(LosersMatch.id == match.next_match_id).first()
             if next_match:
-                if not next_match.team1_id:
-                    next_match.team1_id = winner_id
-                else:
-                    next_match.team2_id = winner_id
+                # Get next match template info
+                next_template_id = db_to_template.get(str(next_match.id))
+                for round_matches in template["rounds"].values():
+                    for match_template in round_matches:
+                        if match_template["match_id"] == next_template_id:
+                            # Check which slot this winner should go to
+                            if match_template["team1"].get("from") == template_id:
+                                next_match.team1_id = winner_id
+                            elif match_template["team2"].get("from") == template_id:
+                                next_match.team2_id = winner_id
         
         db.commit()
         db.refresh(match)

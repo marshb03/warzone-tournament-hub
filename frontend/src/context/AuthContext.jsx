@@ -117,8 +117,9 @@ export const AuthProvider = ({ children }) => {
     forgotPassword,
     confirmPasswordReset,
     isAuthenticated: !!user,
-    isSuperuser: user?.is_superuser || false,
-  };
+    isSuperuser: user?.role === 'SUPER_ADMIN',
+    isHost: user?.role === 'HOST'
+  }
 
   if (loading) {
     return <div>Loading...</div>; // Replace with your loading component

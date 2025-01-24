@@ -2,70 +2,56 @@
 import api from './api';
 import config from '../utils/config';
 
-// Add match endpoints to config.js first
-const matchEndpoints = {
-  base: '/api/v1/matches',
-  create: '/api/v1/matches',
-  createLosers: '/api/v1/matches/losers',
-  details: (id) => `/api/v1/matches/${id}`,
-  tournament: (id) => `/api/v1/matches/tournament/${id}`,
-  update: (id) => `/api/v1/matches/${id}`,
-  updateLosers: (id) => `/api/v1/matches/losers/${id}`,
-  delete: (id) => `/api/v1/matches/${id}`,
-};
-
 export const matchService = {
-  // Create a new match in the winners bracket
-  async createMatch(matchData) {
-    const response = await api.post(matchEndpoints.create, matchData);
-    return response.data;
-  },
+    // Get a specific match (either winners or losers bracket)
+    async getMatch(matchId) {
+        const response = await api.get(config.endpoints.matches.base + '/' + matchId);
+        return response.data;
+    },
 
-  // Create a new match in the losers bracket
-  async createLosersMatch(matchData) {
-    const response = await api.post(matchEndpoints.createLosers, matchData);
-    return response.data;
-  },
+    // Get all matches for a tournament
+    async getTournamentMatches(tournamentId) {
+        const response = await api.get(config.endpoints.matches.tournament(tournamentId));
+        return response.data;
+    },
 
-  // Get a specific match (either winners or losers bracket)
-  async getMatch(matchId) {
-    const response = await api.get(matchEndpoints.details(matchId));
-    return response.data;
-  },
+    // Update winners bracket match
+    async updateWinnersMatch(matchId, updateData) {
+        try {
+            const response = await api.put(config.endpoints.matches.winners(matchId), updateData);
+            return response.data;
+        } catch (error) {
+            console.error('Error updating winners match:', error);
+            throw error;
+        }
+    },
 
-  // Get all matches for a tournament
-  async getTournamentMatches(tournamentId) {
-    const response = await api.get(matchEndpoints.tournament(tournamentId));
-    return response.data;
-  },
+    // Update losers bracket match
+    async updateLosersMatch(matchId, matchData) {
+        try {
+            const response = await api.put(config.endpoints.matches.losers(matchId), matchData);
+            return response.data;
+        } catch (error) {
+            console.error('Error updating losers match:', error);
+            throw error;
+        }
+    },
 
-  // Update a match in either bracket
-  async updateMatch(matchId, updateData) {
-    try {
-      const response = await api.put(`/api/v1/matches/${matchId}`, updateData);
-      return response.data;
-    } catch (error) {
-      console.error('Error updating match:', error);
-      throw error;
-    }
-  },
+    // Update championship match
+    async updateChampionshipMatch(matchId, matchData) {
+        try {
+            const response = await api.put(config.endpoints.matches.championship(matchId), matchData);
+            return response.data;
+        } catch (error) {
+            console.error('Error updating championship match:', error);
+            throw error;
+        }
+    },
 
-  // Specifically update a losers bracket match
-  async updateLosersMatch(matchId, matchData) {
-    const response = await api.put(matchEndpoints.updateLosers(matchId), matchData);
-    return response.data;
-  },
-
-  // Delete a match from either bracket
-  async deleteMatch(matchId) {
-    const response = await api.delete(matchEndpoints.delete(matchId));
-    return response.data;
-  },
-
-  // Helper method to determine if a response is a double elimination format
+   // Helper method to determine if a response is a double elimination format
   isDoubleElimination(response) {
-    return response.hasOwnProperty('winners_bracket') && 
-           response.hasOwnProperty('losers_bracket') && 
-           response.hasOwnProperty('finals');
+    return Object.prototype.hasOwnProperty.call(response, 'winners_bracket') && 
+           Object.prototype.hasOwnProperty.call(response, 'losers_bracket') && 
+           Object.prototype.hasOwnProperty.call(response, 'finals');
   }
 };

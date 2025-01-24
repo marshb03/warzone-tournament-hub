@@ -3,103 +3,157 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import ProfileSettings from '../components/profile/ProfileSettings';
-import Modal from '../components/common/Modal';
-
+import Card from '../components/ui/Card';
+import Button from '../components/ui/Button';
+import { Trophy, Users, Shield, Settings } from 'lucide-react';
 
 const Profile = () => {
-  const { user, isSuperuser } = useAuth();
+  const { user } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  const getRoleDisplay = (role) => {
+    switch (role) {
+      case 'SUPER_ADMIN':
+        return {
+          label: 'Super Admin',
+          class: 'bg-purple-500/20 text-purple-500'
+        };
+      case 'HOST':
+        return {
+          label: 'Tournament Host',
+          class: 'bg-blue-500/20 text-blue-500'
+        };
+      default:
+        return {
+          label: 'User',
+          class: 'bg-gray-500/20 text-gray-400'
+        };
+    }
+  };
+
+  const roleInfo = getRoleDisplay(user?.role);
+
   return (
-    <div className="p-6 max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-6">Profile</h1>
       
-      <div className="bg-white shadow rounded-lg p-6 mb-6">
-        <div className="mb-4">
-          <h2 className="text-xl font-semibold mb-2">Account Information</h2>
-          <p className="text-gray-600">Username: {user?.username}</p>
-          <p className="text-gray-600">Email: {user?.email}</p>
-          <p className="text-gray-600">Role: {isSuperuser ? 'Administrator' : 'User'}</p>
-          
-          {/* Add Update Information Button */}
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-          >
-            Update Information
-          </button>
-        </div>
-      </div>
+      <div className="space-y-6">
+        {/* Basic Info Card */}
+        <Card className="p-6">
+          <div className="flex justify-between items-start mb-6">
+            <div>
+              <h2 className="text-xl font-semibold mb-1">Account Information</h2>
+              <p className="text-sm text-gray-400">Manage your account details</p>
+            </div>
+            <Button
+              variant="ghost"
+              onClick={() => setIsModalOpen(true)}
+              className="flex items-center"
+            >
+              <Settings className="h-4 w-4 mr-2" />
+              Edit
+            </Button>
+          </div>
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
-        <ProfileSettings onClose={() => setIsModalOpen(false)} />
-      </Modal>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <p className="text-sm text-gray-400 mb-1">Username</p>
+              <p className="font-medium">{user?.username}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-400 mb-1">Email</p>
+              <p className="font-medium">{user?.email}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-400 mb-1">Role</p>
+              <span className={`inline-block px-3 py-1 rounded-full text-sm ${roleInfo.class}`}>
+                {roleInfo.label}
+              </span>
+            </div>
+            <div>
+              <p className="text-sm text-gray-400 mb-1">Status</p>
+              <span className={`inline-block px-3 py-1 rounded-full text-sm ${
+                user?.is_active ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'
+              }`}>
+                {user?.is_active ? 'Active' : 'Inactive'}
+              </span>
+            </div>
+          </div>
+        </Card>
 
-      {/* Admin Section - Only visible to superusers */}
-      {isSuperuser && (
-        <div className="bg-white shadow rounded-lg p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4">Admin Controls</h2>
-          <div className="space-y-4">
+        {/* Super Admin Section */}
+        {user?.role === 'SUPER_ADMIN' && (
+          <Card className="p-6">
+            <h2 className="text-xl font-semibold mb-4">Admin Controls</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Link
-                to="/admin/tournaments"
-                className="block p-4 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200"
+                to="/admin"
+                className="block p-4 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
               >
-                <h3 className="font-semibold text-blue-900">Tournament Management</h3>
-                <p className="text-sm text-blue-700">Create and manage tournaments</p>
+                <div className="flex items-center">
+                  <Shield className="h-5 w-5 text-[#2979FF] mr-3" />
+                  <div>
+                    <h3 className="font-semibold">Admin Dashboard</h3>
+                    <p className="text-sm text-gray-400">Manage system settings</p>
+                  </div>
+                </div>
               </Link>
 
               <Link
                 to="/admin/users"
-                className="block p-4 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200"
+                className="block p-4 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
               >
-                <h3 className="font-semibold text-blue-900">User Management</h3>
-                <p className="text-sm text-blue-700">Manage user accounts and permissions</p>
-              </Link>
-
-              <Link
-                to="/admin"
-                className="block p-4 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200"
-              >
-                <h3 className="font-semibold text-blue-900">Admin Dashboard</h3>
-                <p className="text-sm text-blue-700">View overall system statistics</p>
-              </Link>
-
-              <Link
-                to="/admin/tournaments/new"
-                className="block p-4 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200"
-                >
-                <h3 className="font-semibold text-blue-900">Create Tournament</h3>
-                <p className="text-sm text-blue-700">Set up a new tournament</p>
+                <div className="flex items-center">
+                  <Users className="h-5 w-5 text-[#2979FF] mr-3" />
+                  <div>
+                    <h3 className="font-semibold">User Management</h3>
+                    <p className="text-sm text-gray-400">Manage users and roles</p>
+                  </div>
+                </div>
               </Link>
             </div>
-          </div>
-        </div>
-      )}
+          </Card>
+        )}
 
-      {/* Regular User Section */}
-      <div className="bg-white shadow rounded-lg p-6">
-        <h2 className="text-xl font-semibold mb-4">Your Activity</h2>
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Link
-              to="/tournaments"
-              className="block p-4 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200"
-            >
-              <h3 className="font-semibold">Your Tournaments</h3>
-              <p className="text-sm text-gray-600">View tournaments you&apos;ve participated in</p>
-            </Link>
+        {/* Host Section */}
+        {user?.role === 'HOST' && (
+          <Card className="p-6">
+            <h2 className="text-xl font-semibold mb-4">Host Controls</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Link
+                to="/host"
+                className="block p-4 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <div className="flex items-center">
+                  <Trophy className="h-5 w-5 text-[#2979FF] mr-3" />
+                  <div>
+                    <h3 className="font-semibold">Host Dashboard</h3>
+                    <p className="text-sm text-gray-400">Manage your tournaments</p>
+                  </div>
+                </div>
+              </Link>
 
-            <Link
-              to="/team-generator"
-              className="block p-4 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200"
-            >
-              <h3 className="font-semibold">Team Generator</h3>
-              <p className="text-sm text-gray-600">Create and manage your teams</p>
-            </Link>
-          </div>
-        </div>
+              <Link
+                to="/tournaments/new"
+                className="block p-4 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <div className="flex items-center">
+                  <Trophy className="h-5 w-5 text-[#2979FF] mr-3" />
+                  <div>
+                    <h3 className="font-semibold">Create Tournament</h3>
+                    <p className="text-sm text-gray-400">Start a new tournament</p>
+                  </div>
+                </div>
+              </Link>
+            </div>
+          </Card>
+        )}
       </div>
+
+      {/* Settings Modal */}
+      {isModalOpen && (
+        <ProfileSettings onClose={() => setIsModalOpen(false)} />
+      )}
     </div>
   );
 };

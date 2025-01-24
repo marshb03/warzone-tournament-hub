@@ -20,7 +20,6 @@ class ErrorBoundary extends Component {
       errorInfo: errorInfo
     });
     
-    // You could add error logging service here
     console.error('Error caught by boundary:', error, errorInfo);
   }
 

@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { tournamentService } from '../services/tournament';
+import { matchService } from '../services/match';
 import api from '../services/api';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
@@ -45,7 +46,7 @@ const TabButton = ({ active, onClick, children }) => (
 const TournamentDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, isSuperuser } = useAuth();
+  const { user } = useAuth();
   
   // Tournament and match states
   const [tournament, setTournament] = useState(null);
@@ -61,66 +62,73 @@ const TournamentDetail = () => {
 
   useEffect(() => {
     const fetchTournamentData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-  
-        // Fetch tournament details
-        const tournamentData = await tournamentService.getTournamentById(id);
-        setTournament(tournamentData);
-  
-        if (tournamentData.status !== 'PENDING') {
-          // Use the service method to fetch all matches
-          const matchesData = await tournamentService.getTournamentMatches(id);
-          
-          // Combine winners bracket and finals matches
-          const allWinnersMatches = [
-            ...(matchesData.winners_bracket || []),
-            ...(matchesData.finals || [])
-          ];
-          setWinnerMatches(allWinnersMatches);
-          
-          // Set losers matches if double elimination
-          if (tournamentData.format === 'DOUBLE_ELIMINATION') {
-            // Use losers_bracket from the same matchesData
-            setLoserMatches(matchesData.losers_bracket || []);
-          }
+        try {
+            setLoading(true);
+            setError(null);
+    
+            // Fetch tournament details
+            const tournamentData = await tournamentService.getTournamentById(id);
+            setTournament(tournamentData);
+    
+            if (tournamentData.status !== 'PENDING') {
+                // Get all matches
+                const matchesData = await tournamentService.getTournamentMatches(id);
+                
+                // Set winners bracket and finals matches
+                setWinnerMatches([
+                    ...(matchesData.winners_bracket || []),
+                    ...(matchesData.finals || [])
+                ]);
+                
+                // Set losers bracket matches if double elimination
+                if (tournamentData.format === 'DOUBLE_ELIMINATION') {
+                    console.log('Loading losers bracket data:', matchesData.losers_bracket); // Debug log
+                    setLoserMatches(matchesData.losers_bracket || []);
+                }
+            }
+        } catch (err) {
+            console.error('Error fetching tournament data:', err);
+            setError('Failed to load tournament details');
+        } finally {
+            setLoading(false);
         }
-      } catch (err) {
-        console.error('Error fetching tournament data:', err);
-        setError('Failed to load tournament details');
-      } finally {
-        setLoading(false);
-      }
     };
-  
+
     fetchTournamentData();
   }, [id]);
 
-  const canManageTournament = user && (isSuperuser || (tournament?.creator_id === user.id));
+  const canManageTournament = user && (
+    user.role === 'SUPER_ADMIN' || 
+    (user.role === 'HOST' && tournament?.creator_id === user.id)
+  );
 
   const handleStartTournament = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      const startResponse = await api.post(`/api/v1/tournaments/${id}/start`);
+      // Start the tournament
+      await api.post(`/api/v1/tournaments/${id}/start`);
       
-      if (!startResponse.data) {
-        throw new Error('No response received from server');
-      }
+      // Small delay to ensure backend has processed everything
+      await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Refresh tournament data
-      const updatedTournament = await tournamentService.getTournamentById(id);
+      // Fetch all updated data
+      const [updatedTournament, matchesData] = await Promise.all([
+        tournamentService.getTournamentById(id),
+        tournamentService.getTournamentMatches(id)
+      ]);
+      
+      // Update all states at once
       setTournament(updatedTournament);
-      
-      // Fetch initial matches
-      const matchesResponse = await api.get(`/api/v1/matches/tournament/${id}`);
       if (updatedTournament.format === 'DOUBLE_ELIMINATION') {
-        setWinnerMatches(matchesResponse.data.winners_bracket || []);
-        setLoserMatches(matchesResponse.data.losers_bracket || []);
+        setWinnerMatches([
+          ...(matchesData.winners_bracket || []),
+          ...(matchesData.finals || [])
+        ]);
+        setLoserMatches(matchesData.losers_bracket || []);
       } else {
-        setWinnerMatches(matchesResponse.data || []);
+        setWinnerMatches(matchesData.winners_bracket || []);
       }
     } catch (error) {
       console.error('Failed to start tournament:', error);
@@ -191,41 +199,51 @@ const TournamentDetail = () => {
 
   const handleMatchUpdate = async (matchData) => {
     try {
-      setError(null);
-  
-      // Determine if this is a losers bracket match
-      const isLosersMatch = loserMatches.some(m => m.id === matchData.match_id);
-      
-      if (isLosersMatch) {
-        // Use the losers match update method from tournament service
-        await tournamentService.updateLosersMatch(matchData.match_id, {
-          winner_id: matchData.winner_id
-        });
-      } else {
-        // Use the regular match update method from tournament service
-        await tournamentService.updateMatch(matchData.match_id, {
-          winner_id: matchData.winner_id
-        });
-      }
-  
-      // Refresh tournament data using existing service method
-      const matchesData = await tournamentService.getTournamentMatches(id);
-      
-      // Update state with new data
-      if (tournament.format === 'DOUBLE_ELIMINATION') {
+        setError(null);
+        console.log('Match data received:', matchData);
+
+        // Check if this match exists in winners bracket
+        const isWinnersMatch = winnerMatches.some(m => m.id === matchData.match_id);
+        // Check if this is a championship match (round >= 98)
+        const isChampionshipMatch = winnerMatches.some(m => m.id === matchData.match_id && m.round >= 98);
+        // If not in winners bracket, must be losers match
+        const isLosersMatch = loserMatches.some(m => m.id === matchData.match_id);
+
+        if (isChampionshipMatch) {
+            console.log('Detected as championship match');
+            await matchService.updateChampionshipMatch(matchData.match_id, {
+                winner_id: matchData.winner_id
+            });
+        } else if (isWinnersMatch) {
+            console.log('Detected as winners match');
+            await matchService.updateWinnersMatch(matchData.match_id, {
+                winner_id: matchData.winner_id
+            });
+        } else if (isLosersMatch) {
+            console.log('Detected as losers match');
+            await matchService.updateLosersMatch(matchData.match_id, {
+                winner_id: matchData.winner_id
+            });
+        } else {
+            throw new Error('Unable to determine match type');
+        }
+
+        // Refresh tournament data
+        const matchesData = await tournamentService.getTournamentMatches(id);
+        
+        // Update state with new data
         setWinnerMatches([
-          ...(matchesData.winners_bracket || []),
-          ...(matchesData.finals || [])
+            ...(matchesData.winners_bracket || []),
+            ...(matchesData.finals || [])
         ]);
-        setLoserMatches(matchesData.losers_bracket || []);
-      } else {
-        setWinnerMatches(matchesData.winners_bracket || []);
-      }
-  
-      setSelectedMatch(null);
+        if (tournament.format === 'DOUBLE_ELIMINATION') {
+            setLoserMatches(matchesData.losers_bracket || []);
+        }
+
     } catch (error) {
-      console.error('Failed to update match:', error);
-      setError('Failed to update match. Please try again.');
+        console.error('Failed to update match:', error);
+        console.error('Error details:', error.response || error);
+        setError('Failed to update match. Please try again.');
     }
   };
   
@@ -245,7 +263,7 @@ const TournamentDetail = () => {
           <Card className="p-6">
             <TeamList 
               tournamentId={id} 
-              canManage={canManageTournament && tournament.status === 'PENDING'} 
+              tournament={tournament} 
             />
           </Card>
         );
@@ -270,11 +288,11 @@ const TournamentDetail = () => {
         ) : (
           <div className="space-y-12">
             <WinnersBracket
-              matches={winnerMatches}
-              canManage={canManageTournament && tournament.status === 'ONGOING'}
-              onMatchUpdate={renderMatchUpdateModal}
-              totalTeams={tournament.current_teams}
-            />
+            matches={winnerMatches || []}
+            canManage={canManageTournament && tournament.status === 'ONGOING'}
+            onMatchUpdate={renderMatchUpdateModal}
+            totalTeams={tournament.current_teams}
+          />
             
             {tournament.format === 'DOUBLE_ELIMINATION' && (
               <>
