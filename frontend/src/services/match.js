@@ -10,10 +10,25 @@ export const matchService = {
     },
 
     // Get all matches for a tournament
-    async getTournamentMatches(tournamentId) {
-        const response = await api.get(config.endpoints.matches.tournament(tournamentId));
-        return response.data;
-    },
+        async getTournamentMatches(tournamentId) {
+            try {
+                // Get main tournament matches
+                const tournamentResponse = await api.get(config.endpoints.matches.tournament(tournamentId));
+                
+                // Get losers bracket matches from the correct endpoint
+                const losersBracketResponse = await api.get(config.endpoints.matches.losersBracket(tournamentId));
+                
+                return {
+                    winners_bracket: tournamentResponse.data.winners_bracket || [],
+                    losers_bracket: losersBracketResponse.data || [], // This will now have the correct progression data
+                    finals: tournamentResponse.data.finals || [],
+                    total_rounds: tournamentResponse.data.total_rounds
+                };
+            } catch (error) {
+                console.error('Error fetching tournament matches:', error);
+                throw error;
+            }
+        },
 
     // Update winners bracket match
     async updateWinnersMatch(matchId, updateData) {

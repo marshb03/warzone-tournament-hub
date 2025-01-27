@@ -291,7 +291,7 @@ const TournamentTeamGenerator = () => {
     <div className="min-h-screen bg-[#121212]">
       {/* Top Navigation */}
       <div className="border-b border-gray-800">
-        <div className="max-w-[2000px] mx-auto px-4 py-4 flex justify-between items-center">
+        <div className="max-w-[2400px] mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold">Team Generator</h1>
           <Button
             variant={tournamentMode ? 'primary' : 'ghost'}
@@ -302,7 +302,7 @@ const TournamentTeamGenerator = () => {
         </div>
       </div>
 
-      <div className="max-w-[2000px] mx-auto px-4 py-6">
+      <div className="max-w-[2400px] mx-auto px-4 py-6">
         <div className="grid grid-cols-12 gap-6">
           {/* Main Content Area - Team Generator */}
           <div className="col-span-8">

@@ -4,8 +4,13 @@ import config from '../utils/config';
 
 export const adminService = {
     async getDashboardStats() {
-        const response = await api.get(config.endpoints.admin.stats);
-        return response.data;
+        try {
+            const response = await api.get('/api/v1/admin/stats');
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching dashboard stats:', error);
+            throw error;
+        }
     },
 
     async getAllUsers() {

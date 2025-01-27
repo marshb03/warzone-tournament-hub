@@ -71,7 +71,7 @@ const Tournaments = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
+    <div className="max-w-[2400px] mx-auto px-4 py-8 space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Tournaments</h1>
         {isSuperuser && (
@@ -130,7 +130,7 @@ const Tournaments = () => {
           <Loader2 className="h-8 w-8 animate-spin text-[#2979FF]" />
         </div>
       ) : filteredTournaments.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-12">
           {sortedAndFilteredTournaments.map(tournament => (
             <TournamentCard 
               key={tournament.id} 

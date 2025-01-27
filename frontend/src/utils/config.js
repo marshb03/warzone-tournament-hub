@@ -47,7 +47,8 @@ const config = {
         winners: (id) => `/api/v1/matches/winners/${id}`,
         losers: (id) => `/api/v1/matches/losers/${id}`,
         championship: (id) => `/api/v1/matches/championship/${id}`,
-        tournament: (id) => `/api/v1/matches/tournament/${id}`
+        tournament: (id) => `/api/v1/matches/tournament/${id}`,
+        losersBracket: (id) => `/api/v1/losers-matches/tournament/${id}`,
     },
   },
 

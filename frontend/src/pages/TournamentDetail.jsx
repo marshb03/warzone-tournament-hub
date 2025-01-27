@@ -300,6 +300,7 @@ const TournamentDetail = () => {
                   matches={loserMatches}
                   canManage={canManageTournament && tournament.status === 'ONGOING'}
                   onMatchUpdate={renderMatchUpdateModal}
+                  totalTeams={tournament.current_teams}
                 />
               </>
             )}
@@ -376,7 +377,7 @@ const TournamentDetail = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className="max-w-[2400px] mx-auto px-4 py-8">
       {/* Navigation */}
       <div className="mb-6">
         <Button

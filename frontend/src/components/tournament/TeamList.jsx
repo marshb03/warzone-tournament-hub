@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Plus, X, Edit2, Trash2 } from 'lucide-react';
+import { Plus, X, Edit2, Trash2, Users, Shuffle } from 'lucide-react';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import { useAuth } from '../../context/AuthContext';
@@ -11,7 +11,6 @@ const TeamCard = ({ team, onEdit, onDelete, canManage }) => (
     <div>
       <div className="flex items-center space-x-3">
         <h3 className="font-semibold">{team.name}</h3>
-        {/* Simplified seed display */}
         <span className="text-sm text-gray-400">
           Seed #{team.seed}
         </span>
@@ -36,11 +35,60 @@ const TeamCard = ({ team, onEdit, onDelete, canManage }) => (
   </div>
 );
 
+const BulkAddTeamsModal = ({ onClose, onSubmit }) => {
+  const [teamNames, setTeamNames] = useState('');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const teams = teamNames.split('\n')
+      .map(name => name.trim())
+      .filter(name => name.length > 0);
+    onSubmit(teams);
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+      <Card className="w-full max-w-md p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold">Bulk Add Teams</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-white">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Enter Team Names (one per line)
+            </label>
+            <textarea
+              value={teamNames}
+              onChange={(e) => setTeamNames(e.target.value)}
+              className="w-full h-48 p-2 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2979FF]"
+              placeholder="Team 1&#10;Team 2&#10;Team 3"
+              required
+            />
+          </div>
+          <div className="flex justify-end space-x-3">
+            <Button variant="ghost" onClick={onClose} type="button">
+              Cancel
+            </Button>
+            <Button variant="primary" type="submit">
+              Add Teams
+            </Button>
+          </div>
+        </form>
+      </Card>
+    </div>
+  );
+};
+
 const TeamList = ({ tournamentId, tournament }) => {
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
   const [editingTeam, setEditingTeam] = useState(null);
   const [teamName, setTeamName] = useState('');
   const { user } = useAuth();
@@ -48,10 +96,37 @@ const TeamList = ({ tournamentId, tournament }) => {
   const canManageTeams = user && (
     user.role === UserRole.SUPER_ADMIN || 
     (user.role === UserRole.HOST && tournament?.creator_id === user.id)
-);
+  );
 
-// Only show team management options if user has permissions and tournament is PENDING
-const showManagement = canManageTeams && tournament?.status === 'PENDING';
+  const showManagement = canManageTeams && tournament?.status === 'PENDING';
+
+  // Add this function near the top of the TeamList component
+  const handleShuffleTeams = async () => {
+    try {
+      // Get all team names in an array
+      const teamNames = teams.map(team => team.name);
+      
+      // Shuffle the names using Fisher-Yates algorithm
+      for (let i = teamNames.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [teamNames[i], teamNames[j]] = [teamNames[j], teamNames[i]];
+      }
+      
+      // Update each team with a new name, maintaining their original seed
+      const updates = teams.map((team, index) => 
+        api.put(`/api/v1/teams/${team.id}`, {
+          name: teamNames[index],
+          seed: team.seed // Keep original seed
+        })
+      );
+      
+      await Promise.all(updates);
+      await fetchTeams(); // Refresh the list
+    } catch (err) {
+      console.error('Failed to shuffle teams:', err);
+      setError('Failed to shuffle team names');
+    }
+  };
 
   const fetchTeams = useCallback(async () => {
     try {
@@ -86,7 +161,7 @@ const showManagement = canManageTeams && tournament?.status === 'PENDING';
     if (window.confirm('Are you sure you want to delete this team?')) {
       try {
         await api.delete(`/api/v1/teams/${team.id}`);
-        await fetchTeams(); // Refresh the list
+        await fetchTeams();
       } catch (err) {
         console.error('Failed to delete team:', err);
         setError('Failed to delete team');
@@ -108,10 +183,25 @@ const showManagement = canManageTeams && tournament?.status === 'PENDING';
         });
       }
       setIsModalOpen(false);
-      fetchTeams(); // Refresh the list
+      fetchTeams();
     } catch (err) {
       console.error('Failed to save team:', err);
       setError(err.response?.data?.detail || 'Failed to save team');
+    }
+  };
+
+  const handleBulkSubmit = async (teamNames) => {
+    try {
+      for (const name of teamNames) {
+        await api.post('/api/v1/teams/', {
+          name,
+          tournament_id: tournamentId
+        });
+      }
+      await fetchTeams();
+    } catch (err) {
+      console.error('Failed to add teams:', err);
+      setError('Failed to add teams');
     }
   };
 
@@ -121,19 +211,39 @@ const showManagement = canManageTeams && tournament?.status === 'PENDING';
 
   return (
     <div className="space-y-4">
-        <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Teams</h2>
-            {showManagement && (
-                <Button
-                    variant="primary"
-                    onClick={handleAddTeam}
-                    className="flex items-center"
-                >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Team
-                </Button>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-semibold">Teams</h2>
+        {showManagement && (
+          <div className="flex gap-2">
+            <Button
+              variant="primary"
+              onClick={handleAddTeam}
+              className="flex items-center"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Team
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => setIsBulkModalOpen(true)}
+              className="flex items-center"
+            >
+              <Users className="h-4 w-4 mr-2" />
+              Bulk Add
+            </Button>
+            {teams.length > 1 && (
+              <Button
+                variant="secondary"
+                onClick={handleShuffleTeams}
+                className="flex items-center"
+              >
+                <Shuffle className="h-4 w-4 mr-2" />
+                Shuffle Seeds
+              </Button>
             )}
-        </div>
+          </div>
+        )}
+      </div>
 
       {error && (
         <div className="bg-red-500/10 text-red-500 p-3 rounded-lg mb-4">
@@ -204,6 +314,14 @@ const showManagement = canManageTeams && tournament?.status === 'PENDING';
             </form>
           </Card>
         </div>
+      )}
+
+      {/* Bulk Add Teams Modal */}
+      {isBulkModalOpen && (
+        <BulkAddTeamsModal
+          onClose={() => setIsBulkModalOpen(false)}
+          onSubmit={handleBulkSubmit}
+        />
       )}
     </div>
   );

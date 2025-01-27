@@ -27,7 +27,7 @@ const Header = () => {
 
   return (
     <header className="bg-[#1A237E] text-white shadow-lg">
-      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <nav className="max-w-[2400px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           {/* Logo and primary navigation */}
           <div className="flex">

@@ -59,14 +59,14 @@ const TournamentCard = ({ tournament, isOwner, userRole }) => {
   return (
     <Card 
       className={`overflow-hidden transition-all duration-300 hover:shadow-lg hover:shadow-[#2979FF]/10 cursor-pointer group
-        ${isOwner ? 'border-2 border-[#2979FF]/50' : ''}`}
+        ${isOwner ? 'border-10 border-[#2979FF]/50' : ''}`}
       onClick={() => navigate(`/tournaments/${id}`)}
     >
       <div className="p-4 bg-[#1A237E]">
         <div className="flex justify-between items-start mb-2">
           <div>
             <h3 className="text-xl font-bold text-white">{name}</h3>
-            <p className="text-sm text-gray-300">
+            <p className="text-lg text-gray-300">
               Hosted by {creator_username || 'Unknown'}
               {isOwner && <span className="ml-2 text-[#2979FF]">(You)</span>}
             </p>
