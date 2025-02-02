@@ -11,6 +11,15 @@ module.exports = {
           700: '#0369a1',
         },
       },
+      keyframes: {
+        float: {
+          '0%, 100%': { transform: 'translateY(0) rotate(0)' },
+          '50%': { transform: 'translateY(-20px) rotate(10deg)' },
+        }
+      },
+      animation: {
+        float: 'float 10s ease-in-out infinite',
+      },
     },
   },
   plugins: [

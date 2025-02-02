@@ -22,6 +22,29 @@ import LosersBracket from '../components/tournament/LosersBracket';
 import MatchUpdateModal from '../components/tournament/MatchUpdateModal';
 import Leaderboard from '../components/tournament/Leaderboard';
 import TournamentDetails from '../components/tournament/TournamentDetails';
+import VictoryModal from '../components/common/VictoryModal';
+import PageBackground from '../components/backgrounds/PageBackground';
+
+// Toast component for notifications
+const Toast = ({ message, type = 'info', onClose }) => {
+  return (
+    <div className={`fixed top-4 right-4 p-4 rounded-lg shadow-lg ${
+      type === 'success' ? 'bg-green-500' : 
+      type === 'error' ? 'bg-red-500' : 
+      'bg-blue-500'
+    } text-white z-50`}>
+      <div className="flex items-center">
+        <span>{message}</span>
+        <button 
+          onClick={onClose} 
+          className="ml-4 text-white hover:text-gray-200"
+        >
+          ×
+        </button>
+      </div>
+    </div>
+  );
+};
 
 const statusStyles = {
   PENDING: 'bg-yellow-500/20 text-yellow-500',
@@ -58,40 +81,54 @@ const TournamentDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('bracket');
-  // const [updatingMatch, setUpdatingMatch] = useState(false);
+  const [toast, setToast] = useState({ show: false, message: '', type: 'info' });
+  const [showVictoryModal, setShowVictoryModal] = useState(false);
+  const [victoryTeam, setVictoryTeam] = useState(null);
+
+  const showToast = ({ message, type = 'info' }) => {
+    setToast({
+      show: true,
+      message,
+      type
+    });
+    
+    setTimeout(() => {
+      setToast({ show: false, message: '', type: 'info' });
+    }, 5000);
+  };
 
   useEffect(() => {
     const fetchTournamentData = async () => {
-        try {
-            setLoading(true);
-            setError(null);
-    
-            // Fetch tournament details
-            const tournamentData = await tournamentService.getTournamentById(id);
-            setTournament(tournamentData);
-    
-            if (tournamentData.status !== 'PENDING') {
-                // Get all matches
-                const matchesData = await tournamentService.getTournamentMatches(id);
-                
-                // Set winners bracket and finals matches
-                setWinnerMatches([
-                    ...(matchesData.winners_bracket || []),
-                    ...(matchesData.finals || [])
-                ]);
-                
-                // Set losers bracket matches if double elimination
-                if (tournamentData.format === 'DOUBLE_ELIMINATION') {
-                    console.log('Loading losers bracket data:', matchesData.losers_bracket); // Debug log
-                    setLoserMatches(matchesData.losers_bracket || []);
-                }
-            }
-        } catch (err) {
-            console.error('Error fetching tournament data:', err);
-            setError('Failed to load tournament details');
-        } finally {
-            setLoading(false);
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Fetch tournament details
+        const tournamentData = await tournamentService.getTournamentById(id);
+        setTournament(tournamentData);
+
+        if (tournamentData.status !== 'PENDING') {
+          // Get all matches
+          const matchesData = await tournamentService.getTournamentMatches(id);
+          
+          // Set winners bracket and finals matches
+          setWinnerMatches([
+            ...(matchesData.winners_bracket || []),
+            ...(matchesData.finals || [])
+          ]);
+          
+          // Set losers bracket matches if double elimination
+          if (tournamentData.format === 'DOUBLE_ELIMINATION') {
+            console.log('Loading losers bracket data:', matchesData.losers_bracket);
+            setLoserMatches(matchesData.losers_bracket || []);
+          }
         }
+      } catch (err) {
+        console.error('Error fetching tournament data:', err);
+        setError('Failed to load tournament details');
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchTournamentData();
@@ -101,6 +138,30 @@ const TournamentDetail = () => {
     user.role === 'SUPER_ADMIN' || 
     (user.role === 'HOST' && tournament?.creator_id === user.id)
   );
+
+  const handleTournamentUpdate = async (updatedData) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Update tournament via service
+      await tournamentService.updateTournament(id, updatedData);
+      
+      // Fetch updated tournament data
+      const updatedTournament = await tournamentService.getTournamentById(id);
+      setTournament(updatedTournament);
+
+      showToast({
+        message: 'Tournament updated successfully',
+        type: 'success'
+      });
+    } catch (error) {
+      console.error('Failed to update tournament:', error);
+      setError('Failed to update tournament. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleStartTournament = async () => {
     try {
@@ -130,6 +191,11 @@ const TournamentDetail = () => {
       } else {
         setWinnerMatches(matchesData.winners_bracket || []);
       }
+
+      showToast({
+        message: 'Tournament started successfully!',
+        type: 'success'
+      });
     } catch (error) {
       console.error('Failed to start tournament:', error);
       const errorMessage = error.response?.data?.detail || error.message || 'Failed to start tournament. Please try again.';
@@ -137,6 +203,10 @@ const TournamentDetail = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const renderMatchUpdateModal = (match) => {
+    setSelectedMatch(match);
   };
 
   const handleResetTournament = async () => {
@@ -157,6 +227,11 @@ const TournamentDetail = () => {
       // Clear matches
       setWinnerMatches([]);
       setLoserMatches([]);
+
+      showToast({
+        message: 'Tournament reset successfully',
+        type: 'success'
+      });
     } catch (error) {
       console.error('Failed to reset tournament:', error);
       setError('Failed to reset tournament. Please try again.');
@@ -165,98 +240,99 @@ const TournamentDetail = () => {
     }
   };
 
-  const renderMatchUpdateModal = (match) => {
-    setSelectedMatch(match);
-    return (
-      <MatchUpdateModal
-        match={match}
-        onClose={() => setSelectedMatch(null)}
-        onUpdate={handleMatchUpdate}
-      />
-    );
-  };
-
-  const handleTournamentUpdate = async (updatedData) => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      // Update tournament via service
-      await tournamentService.updateTournament(id, updatedData);
-      
-      // Fetch updated tournament data
-      const updatedTournament = await tournamentService.getTournamentById(id);
-      setTournament(updatedTournament);
-  
-      // Show success message or handle UI updates
-    } catch (error) {
-      console.error('Failed to update tournament:', error);
-      setError('Failed to update tournament. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const handleVictoryModalClose = () => {
+        setShowVictoryModal(false);
+        navigate('/results');
+      };
 
   const handleMatchUpdate = async (matchData) => {
     try {
-        setError(null);
-        console.log('Match data received:', matchData);
+      setError(null);
+      console.log('Match data received:', matchData);
 
-        // Check if this match exists in winners bracket
-        const isWinnersMatch = winnerMatches.some(m => m.id === matchData.match_id);
-        // Check if this is a championship match (round >= 98)
-        const isChampionshipMatch = winnerMatches.some(m => m.id === matchData.match_id && m.round >= 98);
-        // If not in winners bracket, must be losers match
-        const isLosersMatch = loserMatches.some(m => m.id === matchData.match_id);
+      // Get the winning team's name before updating the match
+      const matchToUpdate = [...winnerMatches, ...loserMatches].find(m => m.id === matchData.match_id);
+      const winningTeam = matchToUpdate?.team1_id === matchData.winner_id ? matchToUpdate.team1?.name : matchToUpdate.team2?.name;
+      
+      // Check match types
+      const isWinnersMatch = winnerMatches.some(m => m.id === matchData.match_id);
+      const isChampionshipMatch = winnerMatches.some(m => m.id === matchData.match_id && m.round >= 98);
+      const isLosersMatch = loserMatches.some(m => m.id === matchData.match_id);
 
-        if (isChampionshipMatch) {
-            console.log('Detected as championship match');
-            await matchService.updateChampionshipMatch(matchData.match_id, {
-                winner_id: matchData.winner_id
-            });
-        } else if (isWinnersMatch) {
-            console.log('Detected as winners match');
-            await matchService.updateWinnersMatch(matchData.match_id, {
-                winner_id: matchData.winner_id
-            });
-        } else if (isLosersMatch) {
-            console.log('Detected as losers match');
-            await matchService.updateLosersMatch(matchData.match_id, {
-                winner_id: matchData.winner_id
-            });
-        } else {
-            throw new Error('Unable to determine match type');
-        }
+      // Update the match based on its type
+      if (isChampionshipMatch) {
+        console.log('Detected as championship match');
+        await matchService.updateChampionshipMatch(matchData.match_id, {
+          winner_id: matchData.winner_id
+        });
+      } else if (isWinnersMatch) {
+        console.log('Detected as winners match');
+        await matchService.updateWinnersMatch(matchData.match_id, {
+          winner_id: matchData.winner_id
+        });
+      } else if (isLosersMatch) {
+        console.log('Detected as losers match');
+        await matchService.updateLosersMatch(matchData.match_id, {
+          winner_id: matchData.winner_id
+        });
+      } else {
+        throw new Error('Unable to determine match type');
+      }
 
-        // Refresh tournament data
-        const matchesData = await tournamentService.getTournamentMatches(id);
+      // After match update, refresh tournament data to check for completion
+      const updatedTournament = await tournamentService.getTournamentById(tournament.id);
+      
+      // If tournament is now completed, show victory modal
+      if (updatedTournament.status === 'COMPLETED' && tournament.status !== 'COMPLETED') {
+        console.log('Tournament completed, showing victory modal for team:', winningTeam);
+        setVictoryTeam(winningTeam);
+        setShowVictoryModal(true);
+      } else {
+        // If tournament is still ongoing, refresh match data
+        const matchesData = await tournamentService.getTournamentMatches(tournament.id);
         
         // Update state with new data
         setWinnerMatches([
-            ...(matchesData.winners_bracket || []),
-            ...(matchesData.finals || [])
+          ...(matchesData.winners_bracket || []),
+          ...(matchesData.finals || [])
         ]);
         if (tournament.format === 'DOUBLE_ELIMINATION') {
-            setLoserMatches(matchesData.losers_bracket || []);
+          setLoserMatches(matchesData.losers_bracket || []);
         }
 
+        // Update tournament data
+        setTournament(updatedTournament);
+      }
+
+      // Close the match modal
+      setSelectedMatch(null);
+
+      showToast({
+        message: 'Match updated successfully',
+        type: 'success'
+      });
+
     } catch (error) {
-        console.error('Failed to update match:', error);
-        console.error('Error details:', error.response || error);
-        setError('Failed to update match. Please try again.');
+      console.error('Failed to update match:', error);
+      console.error('Error details:', error.response || error);
+      setError('Failed to update match. Please try again.');
+      showToast({
+        message: 'Failed to update match. Please try again.',
+        type: 'error'
+      });
     }
   };
-  
+
   const renderTabContent = () => {
     switch (activeTab) {
       case 'details':
-      return (
-        <TournamentDetails
-          tournament={tournament}
-          canManage={canManageTournament}
-          onUpdate={handleTournamentUpdate}
-        />
-      );
+        return (
+          <TournamentDetails
+            tournament={tournament}
+            canManage={canManageTournament}
+            onUpdate={handleTournamentUpdate}
+          />
+        );
 
       case 'teams':
         return (
@@ -288,11 +364,11 @@ const TournamentDetail = () => {
         ) : (
           <div className="space-y-12">
             <WinnersBracket
-            matches={winnerMatches || []}
-            canManage={canManageTournament && tournament.status === 'ONGOING'}
-            onMatchUpdate={renderMatchUpdateModal}
-            totalTeams={tournament.current_teams}
-          />
+              matches={winnerMatches || []}
+              canManage={canManageTournament && tournament.status === 'ONGOING'}
+              onMatchUpdate={renderMatchUpdateModal}
+              totalTeams={tournament.current_teams}
+            />
             
             {tournament.format === 'DOUBLE_ELIMINATION' && (
               <>
@@ -307,22 +383,22 @@ const TournamentDetail = () => {
           </div>
         );
       
-        case 'leaderboard':
-          return tournament.status === 'PENDING' ? (
-            <Card className="p-6 text-center">
-              <Table className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p className="text-gray-400">
-                Leaderboard will be available once the tournament begins
-              </p>
-            </Card>
-          ) : (
-            <Leaderboard
-              matches={[...winnerMatches, ...loserMatches]}
-            />
-          );
-        
-        default:
-          return null;
+      case 'leaderboard':
+        return tournament.status === 'PENDING' ? (
+          <Card className="p-6 text-center">
+            <Table className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <p className="text-gray-400">
+              Leaderboard will be available once the tournament begins
+            </p>
+          </Card>
+        ) : (
+          <Leaderboard
+            matches={[...winnerMatches, ...loserMatches]}
+          />
+        );
+      
+      default:
+        return null;
     }
   };
 
@@ -377,7 +453,17 @@ const TournamentDetail = () => {
   }
 
   return (
+    <PageBackground>
     <div className="max-w-[2400px] mx-auto px-4 py-8">
+      {/* Toast Notification */}
+      {toast.show && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast({ show: false, message: '', type: 'info' })}
+        />
+      )}
+
       {/* Navigation */}
       <div className="mb-6">
         <Button
@@ -501,7 +587,7 @@ const TournamentDetail = () => {
         {renderTabContent()}
       </div>
 
-      {/* Add the Modal here, right before the closing div */}
+      {/* Match Update Modal */}
       {selectedMatch && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <MatchUpdateModal
@@ -511,7 +597,16 @@ const TournamentDetail = () => {
           />
         </div>
       )}
-    </div>  // Final closing div
+
+      {/* Victory Modal */}
+      {showVictoryModal && (
+        <VictoryModal
+          winner={victoryTeam}
+          onClose={handleVictoryModalClose}
+        />
+      )}
+    </div>
+    </PageBackground>
   );
 };
 

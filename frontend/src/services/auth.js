@@ -71,7 +71,7 @@ async login(emailOrUsername, password, rememberMe = false) {
 
   async register(email, username, password) {
     try {
-      const response = await api.post('/api/v1/users/users', {
+      const response = await api.post('/api/v1/register', {
         email,
         username,
         password,
@@ -80,6 +80,16 @@ async login(emailOrUsername, password, rememberMe = false) {
       return response.data;
     } catch (error) {
       console.error('Registration service error:', error);
+      throw error;
+    }
+  },
+
+  async verifyEmail(token) {
+    try {
+      const response = await api.get(`/api/v1/verify-email/${token}`);
+      return response.data;
+    } catch (error) {
+      console.error('Email verification error:', error);
       throw error;
     }
   },

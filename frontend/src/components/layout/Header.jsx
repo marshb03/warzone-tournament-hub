@@ -1,16 +1,17 @@
 // src/components/layout/Header.jsx
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Bell, Menu, X, ChevronDown, User } from 'lucide-react';
+import { Menu, X, User, ChevronDown } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 import Button from '../ui/Button';
-import { useAuth } from '../../context/AuthContext'; // Assuming this is your auth context path
+import logo from '../../assets/images/logo.png';
 
 const Header = () => {
-  const [isOpen, setIsOpen] = React.useState(false);
-  const [isProfileOpen, setIsProfileOpen] = React.useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout } = useAuth(); // Assuming these are available in your AuthContext
+  const { user, logout } = useAuth();
 
   const isActivePath = (path) => {
     return location.pathname === path;
@@ -26,179 +27,166 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-[#1A237E] text-white shadow-lg">
+    <header className="bg-[#1A237E] text-white relative z-50">
       <nav className="max-w-[2400px] mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
+        <div className="flex justify-between h-24">
           {/* Logo and primary navigation */}
-          <div className="flex">
-            <div className="flex-shrink-0 flex items-center">
-              <Link to="/" className="text-2xl font-bold hover:text-[#2979FF] transition-colors">
-                WZ Tournament
+          <div className="flex items-center">
+            <div className="flex-shrink-0 flex items-center mr-12">
+              <Link to="/" className="flex items-center space-x-2">
+                {/* Logo placeholder - replace src with your logo */}
+                <img
+                  src={logo}
+                  alt="EliteForge"
+                  className="h-56 w-56"
+                />       
               </Link>
             </div>
-            <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-              <Button 
-                variant="ghost"
-                className={isActivePath('/tournaments') ? 'bg-white/10' : ''}
-                onClick={() => navigate('/tournaments')}
+            <div className="hidden sm:flex sm:space-x-8">
+              <Link 
+                to="/tournaments"
+                className={`text-xl font-medium px-3 py-2 rounded-lg transition-colors ${
+                  isActivePath('/tournaments') 
+                    ? 'bg-white/10 text-white' 
+                    : 'text-white hover:text-white hover:bg-white/5'
+                }`}
               >
                 Tournaments
-              </Button>
-              <Button 
-                variant="ghost"
-                className={isActivePath('/team-generator') ? 'bg-white/10' : ''}
-                onClick={() => navigate('/team-generator')}
+              </Link>
+              <Link 
+                to="/team-generator"
+                className={`text-xl font-medium px-3 py-2 rounded-lg transition-colors ${
+                  isActivePath('/team-generator') 
+                    ? 'bg-white/10 text-white' 
+                    : 'text-white hover:text-white hover:bg-white/5'
+                }`}
               >
                 Team Generator
-              </Button>
-              <Button 
-                variant="ghost"
-                className={isActivePath('/rankings') ? 'bg-white/10' : ''}
-                onClick={() => navigate('/rankings')}
+              </Link>
+              <Link 
+                to="/rankings"
+                className={`text-xl font-medium px-3 py-2 rounded-lg transition-colors ${
+                  isActivePath('/rankings') 
+                    ? 'bg-white/10 text-white' 
+                    : 'text-white hover:text-white hover:bg-white/5'
+                }`}
               >
                 Rankings
-              </Button>
-              <Button 
-                variant="ghost"
-                className={isActivePath('/results') ? 'bg-white/10' : ''}
-                onClick={() => navigate('/results')}
+              </Link>
+              <Link 
+                to="/results"
+                className={`text-xl font-medium px-3 py-2 rounded-lg transition-colors ${
+                  isActivePath('/results') 
+                    ? 'bg-white/10 text-white' 
+                    : 'text-white hover:text-white hover:bg-white/5'
+                }`}
               >
                 Results
-              </Button>
+              </Link>
             </div>
           </div>
 
           {/* User navigation */}
-          <div className="hidden sm:ml-6 sm:flex sm:items-center sm:space-x-4">
+          <div className="hidden sm:flex sm:items-center sm:space-x-4">
             {user ? (
-              <>
-                <Button 
-                  variant="ghost"
-                  onClick={() => navigate('/notifications')}
-                  className={isActivePath('/notifications') ? 'bg-white/10' : ''}
+              <div className="relative">
+                <button 
+                  onClick={() => setIsProfileOpen(!isProfileOpen)}
+                  className="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-white/5 transition-colors"
                 >
-                  <Bell className="h-5 w-5" />
-                </Button>
-                
-                <div className="relative">
-                  <div>
-                    <Button 
-                      variant="ghost"
-                      onClick={() => setIsProfileOpen(!isProfileOpen)}
-                      className="flex items-center space-x-2"
-                    >
-                      <User className="h-5 w-5" />
-                      <ChevronDown className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <User className="h-5 w-5" />
+                  <span className="text-lg">{user.username}</span>
+                  <ChevronDown className="h-4 w-4" />
+                </button>
 
-                  {isProfileOpen && (
-                    <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-[#121212] ring-1 ring-black ring-opacity-5">
-                      <div className="py-1">
+                {isProfileOpen && (
+                  <div className="absolute right-0 mt-2 w-48 rounded-lg shadow-lg bg-[#121212] ring-1 ring-black ring-opacity-5">
+                    <div className="py-1">
+                      <Link 
+                        to="/profile"
+                        className="block px-4 py-2 text-sm text-white hover:bg-[#2979FF]/10"
+                        onClick={() => setIsProfileOpen(false)}
+                      >
+                        Your Profile
+                      </Link>
+                      {user.is_superuser && (
                         <Link 
-                          to="/profile"
+                          to="/admin"
                           className="block px-4 py-2 text-sm text-white hover:bg-[#2979FF]/10"
                           onClick={() => setIsProfileOpen(false)}
                         >
-                          Your Profile
+                          Admin Dashboard
                         </Link>
-                        {user.is_superuser && (
-                          <Link 
-                            to="/admin"
-                            className="block px-4 py-2 text-sm text-white hover:bg-[#2979FF]/10"
-                            onClick={() => setIsProfileOpen(false)}
-                          >
-                            Admin Dashboard
-                          </Link>
-                        )}
-                        <button
-                          onClick={() => {
-                            handleLogout();
-                            setIsProfileOpen(false);
-                          }}
-                          className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-[#2979FF]/10"
-                        >
-                          Sign out
-                        </button>
-                      </div>
+                      )}
+                      <button
+                        onClick={() => {
+                          handleLogout();
+                          setIsProfileOpen(false);
+                        }}
+                        className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-[#2979FF]/10"
+                      >
+                        Sign out
+                      </button>
                     </div>
-                  )}
-                </div>
-              </>
+                  </div>
+                )}
+              </div>
             ) : (
-              <>
+              <div className="flex items-center space-x-4">
                 <Button 
                   variant="ghost"
                   onClick={() => navigate('/login')}
+                  className="text-lg"
                 >
                   Login
                 </Button>
                 <Button 
                   variant="primary"
                   onClick={() => navigate('/register')}
+                  className="text-lg"
                 >
                   Register
                 </Button>
-              </>
+              </div>
             )}
           </div>
 
           {/* Mobile menu button */}
           <div className="flex items-center sm:hidden">
-            <Button 
-              variant="ghost" 
+            <button 
               onClick={() => setIsOpen(!isOpen)}
-              className="inline-flex items-center justify-center p-2"
+              className="inline-flex items-center justify-center p-2 rounded-lg text-white hover:bg-white/5 transition-colors"
             >
               {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </Button>
+            </button>
           </div>
         </div>
 
         {/* Mobile menu */}
         {isOpen && (
-          <div className="sm:hidden">
-            <div className="pt-2 pb-3 space-y-1">
-              <Button 
-                variant="ghost" 
-                className="w-full text-left"
-                onClick={() => {
-                  navigate('/tournaments');
-                  setIsOpen(false);
-                }}
+          <div className="sm:hidden py-4">
+            <div className="space-y-2">
+              <Link
+                to="/tournaments"
+                className="block px-3 py-2 rounded-lg text-base font-medium text-white hover:bg-white/5"
+                onClick={() => setIsOpen(false)}
               >
                 Tournaments
-              </Button>
-              <Button 
-                variant="ghost" 
-                className="w-full text-left"
-                onClick={() => {
-                  navigate('/team-generator');
-                  setIsOpen(false);
-                }}
-              >
-                Team Generator
-              </Button>
-              <Button 
-                variant="ghost" 
-                className="w-full text-left"
-                onClick={() => {
-                  navigate('/rankings');
-                  setIsOpen(false);
-                }}
+              </Link>
+              <Link
+                to="/rankings"
+                className="block px-3 py-2 rounded-lg text-base font-medium text-white hover:bg-white/5"
+                onClick={() => setIsOpen(false)}
               >
                 Rankings
-              </Button>
-              <Button 
-                variant="ghost" 
-                className="w-full text-left"
-                onClick={() => {
-                  navigate('/results');
-                  setIsOpen(false);
-                }}
+              </Link>
+              <Link
+                to="/results"
+                className="block px-3 py-2 rounded-lg text-base font-medium text-white hover:bg-white/5"
+                onClick={() => setIsOpen(false)}
               >
                 Results
-              </Button>
+              </Link>
             </div>
           </div>
         )}

@@ -71,20 +71,21 @@ const UserManagement = () => {
   const [statusFilter, setStatusFilter] = useState('all');
 
   useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        setLoading(true);
+        const response = await adminService.getAllUsers();
+        // The response is already the array of users, no need to access .users
+        setUsers(response);
+      } catch (error) {
+        console.error('Failed to fetch users:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchUsers();
   }, []);
-
-  const fetchUsers = async () => {
-    try {
-      setLoading(true);
-      const response = await adminService.getAllUsers();
-      setUsers(response);
-    } catch (error) {
-      console.error('Failed to fetch users:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handlePromote = async (user) => {
     try {
@@ -106,13 +107,11 @@ const UserManagement = () => {
   };
 
   const filteredUsers = users.filter(user => {
-    const matchesSearch = (
-      user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const matchesSearch = user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         user.email.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRole = roleFilter === 'all' || user.role === roleFilter;
     const matchesStatus = statusFilter === 'all' || 
-      (statusFilter === 'active' ? user.is_active : !user.is_active);
+                         (statusFilter === 'active' ? user.is_active : !user.is_active);
     
     return matchesSearch && matchesRole && matchesStatus;
   });

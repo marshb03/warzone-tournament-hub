@@ -45,6 +45,29 @@ async def get_admin_stats(
         status.value: count for status, count in tournament_stats
     }
 
+    # Get tournament format statistics
+    format_stats = db.query(
+        Tournament.format,
+        func.count(Tournament.id).label('count')
+    ).group_by(Tournament.format).all()
+
+    total_tournaments = sum(count for _, count in format_stats)
+    popular_format = None
+    popular_format_percentage = 0
+
+    if format_stats:
+        # Find the most popular format
+        popular_format_data = max(format_stats, key=lambda x: x[1])
+        popular_format = popular_format_data[0].value.replace('_', ' ')
+        if total_tournaments > 0:
+            popular_format_percentage = round((popular_format_data[1] / total_tournaments) * 100)
+
+    # Get recent users (last 5 users who joined)
+    recent_users = db.query(User)\
+        .order_by(User.created_at.desc())\
+        .limit(5)\
+        .all()
+
     # Get system health metrics
     cpu_usage = psutil.cpu_percent()
     memory = psutil.virtual_memory()
@@ -61,9 +84,19 @@ async def get_admin_stats(
             "memoryTotal": memory.total,
             "memoryAvailable": memory.available
         },
+        "popularFormat": popular_format,
+        "popularFormatPercentage": popular_format_percentage,
+        "recentUsers": [
+            {
+                "username": user.username,
+                "created_at": user.created_at,
+                "is_active": user.is_active
+            } for user in recent_users
+        ],
+        "pageViews": 0,  # This would need to be implemented with actual tracking
         "recordedAt": datetime.utcnow().isoformat()
     }
-
+    
 @router.get("/users")
 async def get_all_users(
     skip: int = 0,

@@ -3,6 +3,7 @@ import { PlusCircle, X, Download, Loader2, Trash2 } from 'lucide-react';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import api from '../services/api';
+import PageBackground from '../components/backgrounds/PageBackground';
 
 const TimeInput = ({ onTimeSet }) => {
   const [showCustomInput, setShowCustomInput] = useState(false);
@@ -288,9 +289,10 @@ const TournamentTeamGenerator = () => {
     });
   };
   return (
-    <div className="min-h-screen bg-[#121212]">
+    <PageBackground>
+    <div className="min-h-screen">
       {/* Top Navigation */}
-      <div className="border-b border-gray-800">
+      <div className="border-b">
         <div className="max-w-[2400px] mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold">Team Generator</h1>
           <Button
@@ -549,7 +551,7 @@ const TournamentTeamGenerator = () => {
                     <h3 className="text-xl font-bold mb-4">Respin Amount</h3>
                     <div className="flex items-center space-x-4 mb-6">
                       <div className="flex-1">
-                        <label className="block text-sm text-gray-400 mb-1">Base:</label>
+                        <label className="block text-md font-bold text-gray-400 mb-1">Base:</label>
                         <input
                           type="number"
                           value={settings.baseRespin}
@@ -561,7 +563,7 @@ const TournamentTeamGenerator = () => {
                         />
                       </div>
                       <div className="flex-1">
-                        <label className="block text-sm text-gray-400 mb-1">Next Spin Increase:</label>
+                        <label className="block text-md font-bold text-gray-400 mb-1">Next Spin Increase:</label>
                         <input
                           type="number"
                           value={settings.increment}
@@ -574,21 +576,7 @@ const TournamentTeamGenerator = () => {
                       </div>
                     </div>
 
-                    <div className="bg-[#1A237E]/20 rounded-lg p-4">
-
-                    {/* Progress Bar */}
-                    <div className="w-full bg-gray-700 rounded-full h-3 mb-4">
-                        <div
-                          className="bg-[#2979FF] h-3 rounded-full transition-all duration-300"
-                          style={{
-                            width: `${Math.min(
-                              (currentSpin.totalAmount / getCurrentRespinCost()) * 100,
-                              100
-                            )}%`
-                          }}
-                        />
-                      </div>
-
+                    <div className="rounded-lg p-2">
                       {/* Progress Tracker */}
                       <div className="grid grid-cols-2 gap-4 mb-3">
                         <div className="text-center p-3 bg-gray-800/30 rounded-lg">
@@ -603,6 +591,19 @@ const TournamentTeamGenerator = () => {
                             ${currentSpin.totalAmount}
                           </div>
                         </div>
+                      </div>
+
+                      {/* Progress Bar */}
+                    <div className="w-full bg-gray-700 rounded-full h-3 mb-4">
+                        <div
+                          className="bg-[#2979FF] h-3 rounded-full transition-all duration-300"
+                          style={{
+                            width: `${Math.min(
+                              (currentSpin.totalAmount / getCurrentRespinCost()) * 100,
+                              100
+                            )}%`
+                          }}
+                        />
                       </div>
                     </div>
                   </div>
@@ -710,6 +711,7 @@ const TournamentTeamGenerator = () => {
         </div>
       </div>
     </div>
+    </PageBackground>
   );
 };
 

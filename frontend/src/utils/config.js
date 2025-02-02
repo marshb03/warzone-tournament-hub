@@ -20,6 +20,11 @@ const config = {
           passwordReset: '/api/v1/password-reset',
           passwordResetConfirm: '/api/v1/password-reset-confirm',
       },
+      admin:{
+        stats: '/api/v1/admin/stats',
+        users: '/api/v1/admin/users',  // Add this line
+        tournaments: '/api/v1/admin/tournaments'
+      },
       tournaments: {
           list: '/api/v1/tournaments/',
           create: '/api/v1/tournaments/',

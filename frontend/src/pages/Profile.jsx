@@ -6,6 +6,7 @@ import ProfileSettings from '../components/profile/ProfileSettings';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import { Trophy, Users, Shield, Settings } from 'lucide-react';
+import PageBackground from '../components/backgrounds/PageBackground';
 
 const Profile = () => {
   const { user } = useAuth();
@@ -34,6 +35,7 @@ const Profile = () => {
   const roleInfo = getRoleDisplay(user?.role);
 
   return (
+    <PageBackground>
     <div className="max-w-4xl mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-6">Profile</h1>
       
@@ -100,14 +102,14 @@ const Profile = () => {
               </Link>
 
               <Link
-                to="/admin/users"
+                to="/tournaments/new"
                 className="block p-4 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
               >
                 <div className="flex items-center">
                   <Users className="h-5 w-5 text-[#2979FF] mr-3" />
                   <div>
-                    <h3 className="font-semibold">User Management</h3>
-                    <p className="text-sm text-gray-400">Manage users and roles</p>
+                    <h3 className="font-semibold">Create Tournament</h3>
+                    <p className="text-sm text-gray-400">Start a new tournament</p>
                   </div>
                 </div>
               </Link>
@@ -149,12 +151,13 @@ const Profile = () => {
           </Card>
         )}
       </div>
-
+      
       {/* Settings Modal */}
       {isModalOpen && (
         <ProfileSettings onClose={() => setIsModalOpen(false)} />
       )}
     </div>
+    </PageBackground>
   );
 };
 

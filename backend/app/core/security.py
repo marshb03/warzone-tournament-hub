@@ -50,20 +50,16 @@ def verify_email_verification_token(token: str) -> Optional[int]:
 
 # Existing password functions
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    print("Hash settings used for verification:")
-    print(pwd_context.to_string())
+
     result = pwd_context.verify(plain_password, hashed_password)
     if not result:
         # Try hashing the plain password to compare formats
         test_hash = pwd_context.hash(plain_password)
-        print(f"Test hash of plain password: {test_hash}")
     return result
 
 def get_password_hash(password: str) -> str:
-    print("Password hashing settings:")
-    print(pwd_context.to_string())
+
     result = pwd_context.hash(password)
-    print(f"Hashing result: {result}")
     return result
 
 def create_profile_update_token(user_id: int) -> str:

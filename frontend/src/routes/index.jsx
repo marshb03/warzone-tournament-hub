@@ -16,6 +16,7 @@ import Profile from '../pages/Profile';
 import Login from '../pages/auth/Login';
 import Register from '../pages/auth/Register';
 import NotFound from '../pages/NotFound';
+import EmailVerification from '../pages/auth/EmailVerification';
 
 // Admin/Superuser pages
 import TournamentManagement from '../pages/admin/TournamentManagement';
@@ -36,6 +37,7 @@ const AppRoutes = () => {
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPasswordForm />} />
       <Route path="/reset-password/:token" element={<ResetPasswordForm />} />
+      <Route path="/verify-email/:token" element={<EmailVerification />} />
       
       {/* View-only Routes (no auth required) */}
       <Route path="/tournaments" element={<Tournaments />} />

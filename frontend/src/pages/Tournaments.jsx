@@ -1,12 +1,11 @@
 // src/pages/Tournaments.jsx
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Search, Filter, Loader2 } from 'lucide-react';
 import TournamentCard from '../components/tournament/TournamentCard';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
-import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
+import PageBackground from '../components/backgrounds/PageBackground';
 
 const Tournaments = () => {
   const [tournaments, setTournaments] = useState([]);
@@ -14,9 +13,7 @@ const Tournaments = () => {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const { isSuperuser } = useAuth();
   const [sortBy, setSortBy] = useState('date-desc');
-  const navigate = useNavigate();
 
   // Fetch tournaments
   useEffect(() => {
@@ -24,8 +21,11 @@ const Tournaments = () => {
       try {
         setLoading(true);
         const response = await api.get('/api/v1/tournaments/');
-        console.log('Fetched tournaments:', response.data);
-        setTournaments(response.data);
+        const activeTournaments = response.data.filter(
+          tournament => tournament.status !== 'COMPLETED'
+        );
+        console.log('Fetched tournaments:', activeTournaments);
+        setTournaments(activeTournaments);
       } catch (error) {
         console.error('Error fetching tournaments:', error);
         setError('Failed to load tournaments');
@@ -71,17 +71,10 @@ const Tournaments = () => {
   }
 
   return (
+    <PageBackground>
     <div className="max-w-[2400px] mx-auto px-4 py-8 space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Tournaments</h1>
-        {isSuperuser && (
-          <Button
-            variant="primary"
-            onClick={() => navigate('/admin/tournaments/new')}
-          >
-            Create Tournament
-          </Button>
-        )}
+        <h1 className="text-3xl text-white font-bold">Tournaments</h1>
       </div>
 
       {/* Search and Filters */}
@@ -107,7 +100,6 @@ const Tournaments = () => {
               <option value="all">All Tournaments</option>
               <option value="PENDING">Upcoming</option>
               <option value="ONGOING">Active</option>
-              <option value="COMPLETED">Completed</option>
               <option value="CANCELLED">Cancelled</option>
             </select>
             <select
@@ -144,6 +136,7 @@ const Tournaments = () => {
         </div>
       )}
     </div>
+    </PageBackground>
   );
 };
 

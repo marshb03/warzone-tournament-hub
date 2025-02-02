@@ -2,7 +2,8 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Mail, User, AlertCircle, CheckCircle2 } from 'lucide-react';
+import Card from '../ui/Card';
 import PasswordRequirements from './PasswordRequirements';
 
 const RegisterForm = () => {
@@ -83,75 +84,85 @@ const RegisterForm = () => {
 
   if (registrationSuccess) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8 text-center">
-          <div className="rounded-md bg-green-50 p-4">
-            <h2 className="text-lg font-medium text-green-800">Registration Successful!</h2>
-            <p className="mt-2 text-sm text-green-700">
-              Please check your email to verify your account. 
+      <div className="min-h-screen flex items-center justify-center bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+        <Card className="max-w-md w-full p-8">
+          <div className="text-center">
+            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-500/10 mb-4">
+              <CheckCircle2 className="h-6 w-6 text-green-500" />
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-2">Registration Successful!</h2>
+            <p className="text-gray-400 mb-6">
+              Please check your email to verify your account.
               If you don&apos;t see the email, please check your spam folder.
             </p>
-          </div>
-          <div className="mt-4">
             <Link
               to="/login"
-              className="font-medium text-indigo-600 hover:text-indigo-500"
+              className="inline-flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-[#2979FF] hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#2979FF] focus:ring-offset-gray-900 transition-colors"
             >
               Back to Login
             </Link>
           </div>
-        </div>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+    <div className="min-h-screen flex items-center justify-center bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+      <Card className="max-w-md w-full space-y-8 p-8">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          <h2 className="text-center text-3xl font-bold text-white">
             Create your account
           </h2>
         </div>
         
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {error && (
-            <div className="rounded-md bg-red-50 p-4">
-              <div className="text-sm text-red-700">{error}</div>
+            <div className="rounded-md bg-red-500/10 p-4 border border-red-500/20">
+              <div className="flex items-center">
+                <AlertCircle className="h-5 w-5 text-red-500" />
+                <div className="ml-3">
+                  <p className="text-sm text-red-500">{error}</p>
+                </div>
+              </div>
             </div>
           )}
           
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
+          <div className="space-y-4">
+            <div className="relative">
               <label htmlFor="email" className="sr-only">
                 Email address
               </label>
+              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
               <input
                 id="email"
                 name="email"
                 type="email"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                className="appearance-none relative block w-full pl-10 pr-3 py-2 bg-gray-800 border border-gray-700 placeholder-gray-400 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2979FF] focus:border-transparent"
                 placeholder="Email address"
                 value={formData.email}
                 onChange={handleInputChange}
               />
             </div>
-            <div>
+
+            <div className="relative">
               <label htmlFor="username" className="sr-only">
                 Username
               </label>
+              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
               <input
                 id="username"
                 name="username"
                 type="text"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                className="appearance-none relative block w-full pl-10 pr-3 py-2 bg-gray-800 border border-gray-700 placeholder-gray-400 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2979FF] focus:border-transparent"
                 placeholder="Username"
                 value={formData.username}
                 onChange={handleInputChange}
               />
             </div>
+            
             <div className="relative">
               <label htmlFor="password" className="sr-only">
                 Password
@@ -161,14 +172,11 @@ const RegisterForm = () => {
                 name="password"
                 type={showPassword ? "text" : "password"}
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                className="appearance-none relative block w-full pl-10 pr-10 py-2 bg-gray-800 border border-gray-700 placeholder-gray-400 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2979FF] focus:border-transparent"
                 placeholder="Password"
                 value={formData.password}
                 onChange={handleInputChange}
               />
-              {formData.password && (
-                <PasswordRequirements password={formData.password} />
-              )}
               <button
                 type="button"
                 className="absolute inset-y-0 right-0 pr-3 flex items-center"
@@ -181,7 +189,8 @@ const RegisterForm = () => {
                 )}
               </button>
             </div>
-            <div>
+
+            <div className="relative">
               <label htmlFor="confirmPassword" className="sr-only">
                 Confirm Password
               </label>
@@ -190,7 +199,7 @@ const RegisterForm = () => {
                 name="confirmPassword"
                 type={showPassword ? "text" : "password"}
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                className="appearance-none relative block w-full pl-10 pr-10 py-2 bg-gray-800 border border-gray-700 placeholder-gray-400 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2979FF] focus:border-transparent"
                 placeholder="Confirm Password"
                 value={formData.confirmPassword}
                 onChange={handleInputChange}
@@ -198,33 +207,33 @@ const RegisterForm = () => {
             </div>
           </div>
 
+          {formData.password && (
+            <PasswordRequirements password={formData.password} />
+          )}
+          
           <div>
             <button
               type="submit"
               disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-indigo-400"
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-[#2979FF] hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#2979FF] focus:ring-offset-gray-900 disabled:bg-blue-500 disabled:cursor-not-allowed transition-colors"
             >
-              {isLoading ? (
-                <span>Creating account...</span>
-              ) : (
-                <span>Sign up</span>
-              )}
+              {isLoading ? 'Creating account...' : 'Sign up'}
             </button>
           </div>
 
           <div className="text-center">
-            <span className="text-sm text-gray-600">
+            <span className="text-sm text-gray-400">
               Already have an account?{' '}
               <Link
                 to="/login"
-                className="font-medium text-indigo-600 hover:text-indigo-500"
+                className="font-medium text-[#2979FF] hover:text-blue-400"
               >
                 Sign in
               </Link>
             </span>
           </div>
         </form>
-      </div>
+      </Card>
     </div>
   );
 };

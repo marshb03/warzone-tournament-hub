@@ -1,6 +1,7 @@
 # app/models/user.py
-from sqlalchemy import Boolean, Column, Integer, String, Enum
+from sqlalchemy import Column, Integer, String, Boolean, Enum as SQLEnum, DateTime
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
 import enum
 from app.models.base import Base
 
@@ -16,9 +17,12 @@ class User(Base):
     email = Column(String, unique=True, index=True)
     username = Column(String, unique=True, index=True)
     hashed_password = Column(String)
+    role = Column(SQLEnum(UserRole), default=UserRole.USER)
     is_active = Column(Boolean, default=True)
     is_verified = Column(Boolean, default=False)
-    role = Column(Enum(UserRole), nullable=False, default=UserRole.USER)
+    created_at = Column(DateTime(timezone=True), server_default=func.now()) 
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())  
+    
 
     # Add these relationships
     created_tournaments = relationship("Tournament", back_populates="creator")

@@ -1,10 +1,13 @@
 # app/main.py
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware  # Add this import
+from fastapi.middleware.cors import CORSMiddleware
+import logging
 from .api.v1.api import api_router
 from .core.config import settings
 from .db.database import engine, Base
 from app.models import Base, Tournament, Team, Match, LeaderboardEntry, User
+
+logging.getLogger("multipart.multipart").setLevel(logging.ERROR)
 
 app = FastAPI(title=settings.PROJECT_NAME, version=settings.VERSION)
 

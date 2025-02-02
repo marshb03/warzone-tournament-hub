@@ -112,9 +112,7 @@ class PasswordReset(BaseModel):
 
 @router.post("/reset-password/{token}")
 async def reset_password(token: str, password_data: PasswordReset, db: Session = Depends(deps.get_db)):
-    print(f"Attempting to reset password with token: {token}")  # Debug log
     user_id = verify_password_reset_token(token)
-    print(f"Verified user_id from token: {user_id}")  # Debug log
     
     if not user_id:
         raise HTTPException(status_code=400, detail="Invalid or expired token")
@@ -123,9 +121,7 @@ async def reset_password(token: str, password_data: PasswordReset, db: Session =
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    print(f"Creating new password hash for user: {user.email}")  # Debug log
     hashed_password = get_password_hash(password_data.new_password)
-    print(f"New password hash: {hashed_password}")  # Debug log
     
     user_update = schemas.UserUpdate(password=password_data.new_password)
     updated_user = crud.user.update_user(db, user_id=user_id, user_update=user_update)
@@ -136,14 +132,18 @@ async def reset_password(token: str, password_data: PasswordReset, db: Session =
 @router.get("/verify-email/{token}")
 async def verify_email(token: str, db: Session = Depends(deps.get_db)):
     try:
+        
         user_id = verify_email_verification_token(token)
+       
         if not user_id:
+            print("Invalid or expired token")
             return {
                 "success": False,
                 "message": "Invalid or expired verification link. Please request a new one."
             }
 
         user = crud.user.get_user(db, user_id=user_id)
+        
         if not user:
             return {
                 "success": False,
@@ -156,15 +156,28 @@ async def verify_email(token: str, db: Session = Depends(deps.get_db)):
                 "message": "Email already verified. You can now log in."
             }
 
-        user_update = schemas.UserUpdate(is_verified=True)
-        crud.user.update_user(db, user_id=user_id, user_update=user_update)
-        
-        return {
-            "success": True,
-            "message": "Email verified successfully! You can now log in."
-        }
+        try:
+            # Update user verification status
+            user.is_verified = True
+            db.commit()
+            db.refresh(user)
+            print(f"Verification status updated successfully. New status: {user.is_verified}")
+            
+            return {
+                "success": True,
+                "message": "Email verified successfully! You can now log in."
+            }
+            
+        except Exception as update_error:
+            print(f"Error updating user verification status: {str(update_error)}")
+            db.rollback()
+            raise update_error
         
     except Exception as e:
+        print(f"Verification failed with error: {str(e)}")
+        print("Full error details:")
+        import traceback
+        print(traceback.format_exc())
         return {
             "success": False,
             "message": "Verification failed. Please try again or contact support."
@@ -175,28 +188,51 @@ async def register_user(
     user: schemas.UserCreate,
     db: Session = Depends(deps.get_db)
 ):
-    check_email_rate_limit(user.email)
-    # Check if user exists
-    if crud.user.get_user_by_email(db, email=user.email):
+    try:
+        
+        check_email_rate_limit(user.email)
+        
+        # Check if user exists
+        if crud.user.get_user_by_email(db, email=user.email):
+            print(f"Email {user.email} already registered")
+            raise HTTPException(
+                status_code=400,
+                detail="Email already registered"
+            )
+        
+        # Create user
+        new_user = crud.user.create_user(db=db, user=user)
+        
+        try:
+            # Generate verification token
+            token = create_email_verification_token(new_user.id)
+            
+            # Send verification email
+            await send_verification_email(
+                email_to=new_user.email,
+                token=token,
+                username=new_user.username
+            )
+            
+        except Exception as email_error:
+            print(f"Error sending verification email: {str(email_error)}")
+            print("Full error details:")
+            import traceback
+            print(traceback.format_exc())
+            # Note: We're catching the email error but still returning the user
+            # This way the account is created even if email fails
+        
+        return new_user
+        
+    except Exception as e:
+        print(f"Registration error: {str(e)}")
+        print("Full error details:")
+        import traceback
+        print(traceback.format_exc())
         raise HTTPException(
-            status_code=400,
-            detail="Email already registered"
+            status_code=500,
+            detail=str(e)
         )
-    
-    # Create user
-    new_user = crud.user.create_user(db=db, user=user)
-    
-    # Generate verification token
-    token = create_email_verification_token(new_user.id)
-    
-    # Send verification email
-    await send_verification_email(
-        email_to=new_user.email,
-        token=token,
-        username=new_user.username
-    )
-    
-    return new_user
 
 # Add this test route temporarily
 @router.get("/test-email")
