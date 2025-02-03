@@ -18,13 +18,15 @@ app.add_middleware(
         "http://localhost:3000",
         "http://127.0.0.1:3000",
         "https://bsrpgaming.com",
-        "https://www.bsrpgaming.com"
+        "https://www.bsrpgaming.com",
+        "https://warzone-tournament-hub-production.up.railway.app"
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["*"],
 )
+
 # Create database tables
 Base.metadata.create_all(bind=engine)
 
