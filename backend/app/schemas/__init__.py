@@ -6,3 +6,4 @@ from .match import Match, MatchCreate, MatchUpdate, TournamentBracketResponse
 from .token import Token, TokenPayload
 from .leaderboard import LeaderboardEntry, LeaderboardEntry, LeaderboardEntryCreate
 from .losers_match import LosersMatch, LosersMatchCreate, DoubleBracketResponse
+from .host_profile import HostProfile, HostProfileBase, HostProfileCreate, HostProfileUpdate, HostStatistics
