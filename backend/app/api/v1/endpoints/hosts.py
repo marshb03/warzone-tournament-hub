@@ -22,13 +22,10 @@ async def get_active_hosts(
     Get all active hosts who have hosted at least one tournament,
     including their statistics.
     """
-    print("Endpoint /hosts/active called")  # Debug log
     try:
         result = crud.get_active_hosts_with_stats(db)
-        print(f"Endpoint returning: {result}")  # Debug log
         return result
     except Exception as e:
-        print(f"Error in endpoint: {str(e)}")  # Debug log
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/", response_model=HostProfile)

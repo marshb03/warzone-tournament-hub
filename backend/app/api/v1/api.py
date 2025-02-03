@@ -1,7 +1,7 @@
 # app/api/v1/api.py
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import auth, tournament, team, match, user, leaderboard, player_ranking, team_generator, losers_match, admin, hosts
+from app.api.v1.endpoints import auth, tournament, team, match, user, leaderboard, player_ranking, team_generator, losers_match, admin, hosts, host_applications
 
 api_router = APIRouter()
 
@@ -16,4 +16,5 @@ api_router.include_router(player_ranking.router, prefix="/player-ranking", tags=
 api_router.include_router(team_generator.router, prefix="/team-generator", tags=["team-generator"])
 api_router.include_router(losers_match.router, prefix="/losers-matches", tags=["losers matches"])
 api_router.include_router(hosts.router,prefix="/hosts",tags=["hosts"])
+api_router.include_router(host_applications.router,prefix="/host-applications",tags=["host-applications"])
 

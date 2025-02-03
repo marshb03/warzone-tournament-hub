@@ -3,8 +3,8 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authService } from '../services/auth';
 import { storage } from '../services/storage';
 
-
-const AuthContext = createContext(null);
+// Export the context so it can be imported elsewhere if needed
+export const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);

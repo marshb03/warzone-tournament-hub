@@ -31,7 +31,6 @@ class DailyHostStatsCache:
 
 def get_host_statistics(db: Session, user_id: int) -> Dict:
     """Get statistics for a specific host."""
-    print(f"Getting statistics for host ID: {user_id}")  # Debug log
     
     tournaments_count = (
         db.query(func.count(Tournament.id))
@@ -49,7 +48,6 @@ def get_host_statistics(db: Session, user_id: int) -> Dict:
         "tournaments_count": tournaments_count,
         "total_teams": total_teams
     }
-    print(f"Host {user_id} stats: {stats}")  # Debug log
     return stats
 
 def get_active_hosts_with_stats(db: Session) -> List[Dict]:
@@ -57,15 +55,12 @@ def get_active_hosts_with_stats(db: Session) -> List[Dict]:
     Get all active hosts with their statistics.
     Uses daily caching to minimize database queries.
     """
-    print("Getting active hosts with stats")  # Debug log
     
     # Check cache first
     cached_data = DailyHostStatsCache.get_cached_data()
     if cached_data is not None:
-        print("Returning cached data")  # Debug log
         return cached_data
 
-    print("Cache miss, querying database")  # Debug log
     
     # Query for all active hosts
     hosts = (
@@ -74,8 +69,6 @@ def get_active_hosts_with_stats(db: Session) -> List[Dict]:
         .filter(User.is_active == True)
         .all()
     )
-
-    print(f"Found {len(hosts)} active hosts")  # Debug log
 
     result = []
     for host in hosts:
@@ -89,8 +82,6 @@ def get_active_hosts_with_stats(db: Session) -> List[Dict]:
             "total_teams": stats["total_teams"]
         }
         result.append(host_data)
-
-    print(f"Final result: {result}")  # Debug log
     
     # Update cache
     DailyHostStatsCache.set_cached_data(result)

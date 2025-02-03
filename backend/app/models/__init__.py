@@ -9,6 +9,7 @@ from .associations import team_player
 from .losers_match import LosersMatch
 from .player_ranking import PlayerRanking
 from .host_profile import HostProfile
+from .host_application import HostApplication
 from .activity_log import ActivityLog, ActivityType
 from .system_health import SystemHealth, MetricType
 

@@ -94,6 +94,13 @@ const AdminDashboard = () => {
               <Trophy className="h-5 w-5 text-[#2979FF] mr-2" />
               <span>Manage Tournaments</span>
             </Link>
+            <Link 
+              to="/admin/host-applications"
+              className="flex items-center px-4 py-2 bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors"
+            >
+              <UserPlus className="h-5 w-5 text-[#2979FF] mr-2" />
+              <span>Host Applications</span>
+            </Link>
           </div>
         </div>
       </div>

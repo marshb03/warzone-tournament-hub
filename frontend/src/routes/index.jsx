@@ -17,12 +17,14 @@ import Login from '../pages/auth/Login';
 import Register from '../pages/auth/Register';
 import NotFound from '../pages/NotFound';
 import EmailVerification from '../pages/auth/EmailVerification';
+import HostApplication from '../pages/HostApplication';
 
 // Admin/Superuser pages
 import TournamentManagement from '../pages/admin/TournamentManagement';
 import UserManagement from '../pages/admin/UserManagement';
 import AdminDashboard from '../pages/admin/AdminDashboard';
 import CreateTournament from '../pages/admin/CreateTournament';
+import HostApplications from '../pages/admin/HostApplication';
 
 //Host pages
 import HostDashboard from '../pages/host/HostDashboard';
@@ -38,6 +40,7 @@ const AppRoutes = () => {
       <Route path="/forgot-password" element={<ForgotPasswordForm />} />
       <Route path="/reset-password/:token" element={<ResetPasswordForm />} />
       <Route path="/verify-email/:token" element={<EmailVerification />} />
+      <Route path="/host-application" element={<HostApplication />} />
       
       {/* View-only Routes (no auth required) */}
       <Route path="/tournaments" element={<Tournaments />} />
@@ -78,6 +81,11 @@ const AppRoutes = () => {
       <Route path="/admin/tournaments" element={
         <SuperAdminRoute>
           <TournamentManagement />
+        </SuperAdminRoute>
+      } />
+      <Route path="/admin/host-applications" element={
+        <SuperAdminRoute>
+          <HostApplications />
         </SuperAdminRoute>
       } />
 

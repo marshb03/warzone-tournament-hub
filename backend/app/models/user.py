@@ -27,7 +27,8 @@ class User(Base):
     # Add these relationships
     created_tournaments = relationship("Tournament", back_populates="creator")
     teams = relationship("Team", secondary="team_player", back_populates="players")
-    activities = relationship("ActivityLog", back_populates="user")  # Add this line
+    activities = relationship("ActivityLog", back_populates="user")
+    host_applications = relationship("HostApplication", back_populates="user")
 
     @property
     def is_superuser(self):
