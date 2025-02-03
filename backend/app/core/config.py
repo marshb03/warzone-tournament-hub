@@ -13,21 +13,21 @@ class Settings(BaseSettings):
     DATABASE_URL: str
 
     # Frontend URL for reset password and verification links
-    FRONTEND_URL: str = "http://localhost:3000"
+    FRONTEND_URL: str = "https://bsrpgaming.com"  # Updated for production
 
     # Email settings for ranking form
     EMAIL_FROM: Optional[str] = None
     EMAIL_RECIPIENTS: Optional[str] = None
 
     # SMTP settings (used for both ranking form and auth emails)
-    SMTP_HOST: Optional[str] = None  # Changed from SMTP_SERVER for consistency
+    SMTP_HOST: Optional[str] = None
     SMTP_PORT: Optional[int] = None
-    SMTP_USER: Optional[str] = None  # Changed from SMTP_USERNAME for consistency
+    SMTP_USER: Optional[str] = None
     SMTP_PASSWORD: Optional[str] = None
     SMTP_TLS: bool = True
 
     # Additional email settings for auth
-    EMAIL_FROM_ADDRESS: str = "noreply@example.com"  # Default fallback
+    EMAIL_FROM_ADDRESS: str = "buildsbybrett@gmail.com"  # Updated for production
     EMAIL_FROM_NAME: str = "Warzone Tournament Hub"
 
     @field_validator('EMAIL_RECIPIENTS')
