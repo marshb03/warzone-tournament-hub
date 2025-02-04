@@ -26,7 +26,7 @@ const Hero = () => {
               Welcome to{' '}
               <span className="relative whitespace-nowrap">
                 <span className="bg-gradient-to-r from-[#2979FF] via-blue-400 to-[#2979FF] text-transparent bg-clip-text">
-                  GHML Gaming
+                  BSRP Gaming
                 </span>
                 {/* Accent line under GHML Gaming */}
                 <div className="absolute -bottom-2 left-0 w-full h-1 bg-gradient-to-r from-[#2979FF] via-blue-400 to-[#2979FF] rounded-full" />

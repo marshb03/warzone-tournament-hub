@@ -41,6 +41,7 @@ const AppRoutes = () => {
       <Route path="/reset-password/:token" element={<ResetPasswordForm />} />
       <Route path="/verify-email/:token" element={<EmailVerification />} />
       <Route path="/host-application" element={<HostApplication />} />
+      <Route path="/team-generator" element={<TeamGenerator />} />
       
       {/* View-only Routes (no auth required) */}
       <Route path="/tournaments" element={<Tournaments />} />
@@ -59,11 +60,6 @@ const AppRoutes = () => {
       <Route path="/tournaments/new" element={
         <HostRoute>
           <CreateTournament />
-        </HostRoute>
-      } />
-      <Route path="/team-generator" element={
-        <HostRoute>
-          <TeamGenerator />
         </HostRoute>
       } />
       

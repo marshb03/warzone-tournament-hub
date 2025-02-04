@@ -86,12 +86,19 @@ async def send_email(email_to: str, subject: str, html_content: str) -> None:
         html_part = MIMEText(get_email_template(html_content), "html")
         message.attach(html_part)
 
+        print(f"Attempting to connect to {settings.SMTP_HOST}:{settings.SMTP_PORT}")
         with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT) as server:
+            print("Connected to SMTP server, starting TLS")
             server.starttls()
+            print("TLS started, attempting login")
             server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
+            print("Login successful, sending message")
             server.send_message(message)
+            print("Message sent successfully")
             
     except Exception as e:
+        print(f"Error sending email: {str(e)}")
+        print(f"SMTP Settings: Host={settings.SMTP_HOST}, Port={settings.SMTP_PORT}, User={settings.SMTP_USER}")
         raise
 
 async def send_verification_email(email_to: str, token: str, username: str) -> None:

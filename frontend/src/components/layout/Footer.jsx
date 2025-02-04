@@ -19,7 +19,7 @@ const Footer = () => {
                 alt="EliteForge" 
                 className="h-32 w-32"
               />
-              <span className="text-2xl font-bold">GHML Gaming</span>
+              <span className="text-2xl font-bold">BSRP Gaming</span>
             </Link>
             
             <p className="mt-4 text-sm text-gray-300">
@@ -60,7 +60,7 @@ const Footer = () => {
             <div className="space-y-3">
               <div className="flex items-center text-gray-300 hover:text-white transition-colors">
                 <Mail className="h-5 w-5 mr-2" />
-                <a href="mailto:contact@eliteforge.com">ghmlgaming@gmail.com</a>
+                <a href="mailto:contact@eliteforge.com">support@bsrpgaming.com</a>
               </div>
               <div className="flex items-center space-x-4">
                 <a 
@@ -111,7 +111,7 @@ const Footer = () => {
         <div className="border-t border-gray-700 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <p className="text-center text-sm text-gray-300">
-              © {new Date().getFullYear()} GHML Gaming. All rights reserved.
+              © {new Date().getFullYear()} BSRP Gaming. All rights reserved.
             </p>
             <div className="mt-4 md:mt-0 flex space-x-6">
               <Link to="/privacy" className="text-sm text-gray-300 hover:text-white transition-colors">
