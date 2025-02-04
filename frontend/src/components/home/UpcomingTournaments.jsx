@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 import { tournamentService } from '../../services/tournament';
 import HomeTournamentCard from '../tournament/HomeTournamentCard';
+import cache from '../../utils/cache';
 
 export const UpcomingTournaments = () => {
   const [tournaments, setTournaments] = useState([]);
@@ -13,18 +14,43 @@ export const UpcomingTournaments = () => {
   useEffect(() => {
     const fetchTournaments = async () => {
       try {
+        // Check cache first
+        const cachedTournaments = cache.get('upcoming-tournaments');
+        if (cachedTournaments) {
+          setTournaments(cachedTournaments);
+          setLoading(false);
+          return;
+        }
+  
+        // If no cache, fetch from API
         const response = await tournamentService.getAllTournaments();
+        const now = new Date();
+        
         const upcomingTournaments = response
-          .filter(t => t.status === 'PENDING')
-          .slice(0, 4);
+          .filter(t => {
+            // Filter tournaments that are:
+            // 1. Still pending
+            // 2. Have a start date in the future
+            const tournamentDate = new Date(t.start_date);
+            return t.status === 'PENDING' && tournamentDate > now;
+          })
+          .sort((a, b) => {
+            // Sort by start date, earliest first
+            return new Date(a.start_date) - new Date(b.start_date);
+          })
+          .slice(0, 4);  // Take only the first 4
+        
         setTournaments(upcomingTournaments);
+        
+        // Cache the response for 4 hours
+        cache.set('upcoming-tournaments', upcomingTournaments, 4);
       } catch (error) {
         console.error('Error fetching tournaments:', error);
       } finally {
         setLoading(false);
       }
     };
-
+  
     fetchTournaments();
   }, []);
 

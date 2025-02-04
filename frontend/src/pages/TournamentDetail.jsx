@@ -24,6 +24,7 @@ import Leaderboard from '../components/tournament/Leaderboard';
 import TournamentDetails from '../components/tournament/TournamentDetails';
 import VictoryModal from '../components/common/VictoryModal';
 import PageBackground from '../components/backgrounds/PageBackground';
+import cache from '../utils/cache';
 
 // Toast component for notifications
 const Toast = ({ message, type = 'info', onClose }) => {
@@ -170,6 +171,9 @@ const TournamentDetail = () => {
       
       // Start the tournament
       await api.post(`/api/v1/tournaments/${id}/start`);
+
+      // Clear the upcoming tournaments cache since a tournament status changed
+      cache.clear('upcoming-tournaments');
       
       // Small delay to ensure backend has processed everything
       await new Promise(resolve => setTimeout(resolve, 500));
@@ -541,13 +545,13 @@ const TournamentDetail = () => {
       </div>
 
       {/* Tabs Navigation */}
-      <div className="border-b border-gray-800 mb-6">
-        <div className="flex space-x-4">
+      <div className="border-b border-gray-800 mb-6 overflow-x-auto">
+        <div className="flex space-x-4 min-w-fit pb-2">  {/* Added min-w-fit and pb-2 */}
           <TabButton 
             active={activeTab === 'details'} 
             onClick={() => setActiveTab('details')}
           >
-            <div className="flex items-center">
+            <div className="flex items-center whitespace-nowrap">  {/* Added whitespace-nowrap */}
               <Edit2 className="h-4 w-4 mr-2" />
               Details
             </div>
@@ -556,7 +560,7 @@ const TournamentDetail = () => {
             active={activeTab === 'bracket'} 
             onClick={() => setActiveTab('bracket')}
           >
-            <div className="flex items-center">
+            <div className="flex items-center whitespace-nowrap">
               <Trophy className="h-4 w-4 mr-2" />
               Bracket
             </div>
@@ -565,7 +569,7 @@ const TournamentDetail = () => {
             active={activeTab === 'teams'} 
             onClick={() => setActiveTab('teams')}
           >
-            <div className="flex items-center">
+            <div className="flex items-center whitespace-nowrap">
               <Users className="h-4 w-4 mr-2" />
               Teams ({tournament.current_teams}/{tournament.max_teams})
             </div>
@@ -574,14 +578,13 @@ const TournamentDetail = () => {
             active={activeTab === 'leaderboard'} 
             onClick={() => setActiveTab('leaderboard')}
           >
-            <div className="flex items-center">
+            <div className="flex items-center whitespace-nowrap">
               <Table className="h-4 w-4 mr-2" />
               Leaderboard
             </div>
           </TabButton>
         </div>
       </div>
-
       {/* Tab Content */}
       <div className="mt-6">
         {renderTabContent()}

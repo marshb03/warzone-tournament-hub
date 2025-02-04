@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Twitter, Link as LinkIcon } from 'lucide-react';
 import api from '../../services/api';
+import cache from '../../utils/cache';
 
 // Import host logos
 import host1Logo from '../../assets/images/host1-logo.png';
@@ -91,8 +92,20 @@ const TournamentHostSection = () => {
   useEffect(() => {
     const fetchHosts = async () => {
       try {
+        // Check cache first
+        const cachedHosts = cache.get('tournament-hosts');
+        if (cachedHosts) {
+          setHosts(cachedHosts);
+          setLoading(false);
+          return;
+        }
+
+        // If no cache, fetch from API
         const response = await api.get('/api/v1/hosts/active');
         setHosts(response.data);
+        
+        // Cache the response for 12 hours
+        cache.set('tournament-hosts', response.data, 12);
       } catch (error) {
         console.error('Failed to fetch hosts:', error);
         setError('Unable to load tournament hosts at this time.');

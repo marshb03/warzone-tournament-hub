@@ -174,6 +174,13 @@ const Header = () => {
                 Tournaments
               </Link>
               <Link
+                to="/team-generator"
+                className="block px-3 py-2 rounded-lg text-base font-medium text-white hover:bg-white/5"
+                onClick={() => setIsOpen(false)}
+              >
+                Team Generator
+              </Link>
+              <Link
                 to="/rankings"
                 className="block px-3 py-2 rounded-lg text-base font-medium text-white hover:bg-white/5"
                 onClick={() => setIsOpen(false)}
@@ -187,6 +194,60 @@ const Header = () => {
               >
                 Results
               </Link>
+              
+              {/* Add mobile auth buttons */}
+              <div className="pt-4 mt-4 border-t border-white/10">
+                {user ? (
+                  <>
+                    <Link
+                      to="/profile"
+                      className="block px-3 py-2 rounded-lg text-base font-medium text-white hover:bg-white/5"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      Profile
+                    </Link>
+                    {user.is_superuser && (
+                      <Link
+                        to="/admin"
+                        className="block px-3 py-2 rounded-lg text-base font-medium text-white hover:bg-white/5"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        Admin Dashboard
+                      </Link>
+                    )}
+                    <button
+                      onClick={() => {
+                        handleLogout();
+                        setIsOpen(false);
+                      }}
+                      className="block w-full text-left px-3 py-2 rounded-lg text-base font-medium text-white hover:bg-white/5"
+                    >
+                      Sign out
+                    </button>
+                  </>
+                ) : (
+                  <div className="space-y-2">
+                    <button
+                      onClick={() => {
+                        navigate('/login');
+                        setIsOpen(false);
+                      }}
+                      className="block w-full px-3 py-2 text-left rounded-lg text-base font-medium text-white hover:bg-white/5"
+                    >
+                      Login
+                    </button>
+                    <button
+                      onClick={() => {
+                        navigate('/register');
+                        setIsOpen(false);
+                      }}
+                      className="block w-full px-3 py-2 text-left rounded-lg text-base font-medium text-white bg-[#2979FF] hover:bg-[#2979FF]/90"
+                    >
+                      Register
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}

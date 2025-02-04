@@ -6,6 +6,7 @@ import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import api from '../../services/api';
 import config from '../../utils/config';
+import cache from '../../utils/cache';
 
 const CreateTournament = () => {
   const navigate = useNavigate();
@@ -88,6 +89,10 @@ const CreateTournament = () => {
   
       const response = await api.post(config.endpoints.tournaments.create, tournamentData);
       console.log('Tournament created:', response.data);
+
+      // Clear the upcoming tournaments cache since we have a new tournament
+      cache.clear('upcoming-tournaments');
+
       navigate('/tournaments');
     } catch (error) {
       console.error('API Error:', {

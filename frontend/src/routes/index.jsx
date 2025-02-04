@@ -11,13 +11,14 @@ import Tournaments from '../pages/Tournaments';
 import TournamentDetail from '../pages/TournamentDetail';
 import Results from '../pages/Results';
 import TeamGenerator from '../pages/TeamGenerator';
-import PlayerRankings from '../pages/PlayerRankings';
+//import PlayerRankings from '../pages/PlayerRankings';
 import Profile from '../pages/Profile';
 import Login from '../pages/auth/Login';
 import Register from '../pages/auth/Register';
 import NotFound from '../pages/NotFound';
 import EmailVerification from '../pages/auth/EmailVerification';
 import HostApplication from '../pages/HostApplication';
+import ComingSoon from '../pages/ComingSoon';
 
 // Admin/Superuser pages
 import TournamentManagement from '../pages/admin/TournamentManagement';
@@ -43,11 +44,13 @@ const AppRoutes = () => {
       <Route path="/host-application" element={<HostApplication />} />
       <Route path="/team-generator" element={<TeamGenerator />} />
       
+      
       {/* View-only Routes (no auth required) */}
       <Route path="/tournaments" element={<Tournaments />} />
       <Route path="/tournaments/:id" element={<TournamentDetail />} />
       <Route path="/results" element={<Results />} />
-      <Route path="/rankings" element={<PlayerRankings />} />
+      {/* <Route path="/rankings" element={<PlayerRankings />} />*/}
+      <Route path="/rankings" element={<ComingSoon />} />
 
       {/* Protected Routes (require login) */}
       <Route path="/profile" element={
