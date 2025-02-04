@@ -4,7 +4,7 @@ from pydantic import field_validator
 from typing import List, Optional
 
 class Settings(BaseSettings):
-    PROJECT_NAME: str = "Warzone Tournament Hub"
+    PROJECT_NAME: str = "BSRP Gaming"
     VERSION: str = "0.1.0"
     API_V1_STR: str = "/api/v1"
     SECRET_KEY: str
@@ -28,7 +28,7 @@ class Settings(BaseSettings):
 
     # Additional email settings for auth
     EMAIL_FROM_ADDRESS: str = "buildsbybrett@gmail.com"  # Updated for production
-    EMAIL_FROM_NAME: str = "Warzone Tournament Hub"
+    EMAIL_FROM_NAME: str = "BSRP Gaming"
 
     @field_validator('EMAIL_RECIPIENTS')
     @classmethod
