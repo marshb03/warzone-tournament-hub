@@ -87,10 +87,11 @@ async def send_email(email_to: str, subject: str, html_content: str) -> None:
         message.attach(html_part)
 
         print(f"Attempting to connect to {settings.SMTP_HOST}:{settings.SMTP_PORT}")
-        with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT) as server:
-            print("Connected to SMTP server, starting TLS")
-            server.starttls()
-            print("TLS started, attempting login")
+        
+        # Use SMTP_SSL instead of SMTP
+        with smtplib.SMTP_SSL(settings.SMTP_HOST, settings.SMTP_PORT) as server:
+            print("Connected to SMTP server with SSL")
+            print(f"Attempting login with user: {settings.SMTP_USER}")
             server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
             print("Login successful, sending message")
             server.send_message(message)
