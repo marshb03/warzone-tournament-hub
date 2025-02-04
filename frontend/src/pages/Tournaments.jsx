@@ -122,7 +122,7 @@ const Tournaments = () => {
           <Loader2 className="h-8 w-8 animate-spin text-[#2979FF]" />
         </div>
       ) : filteredTournaments.length > 0 ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-12">
+        <div className="grid grid-cols-2 sm:grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-12">
           {sortedAndFilteredTournaments.map(tournament => (
             <TournamentCard 
               key={tournament.id} 
