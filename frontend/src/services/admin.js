@@ -15,8 +15,7 @@ export const adminService = {
 
     async getAllUsers() {
         try {
-            // Use the direct endpoint path instead of config for now
-            const response = await api.get('/api/v1/users');
+            const response = await api.get('/api/v1/admin/users');
             return response.data;
         } catch (error) {
             console.error('Error in getAllUsers:', error);
