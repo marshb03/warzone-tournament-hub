@@ -1,6 +1,6 @@
 // src/services/admin.js
 import api from './api';
-//import config from '../utils/config';
+import config from '../utils/config';
 
 export const adminService = {
     async getDashboardStats() {
@@ -15,7 +15,9 @@ export const adminService = {
 
     async getAllUsers() {
         try {
-            const response = await api.get('/api/v1/admin/users');
+            console.log('API URL:', config.apiUrl); // Debug log
+            console.log('Endpoint:', config.endpoints.admin.users); // Debug log
+            const response = await api.get(config.endpoints.admin.users);
             return response.data;
         } catch (error) {
             console.error('Error in getAllUsers:', error);
