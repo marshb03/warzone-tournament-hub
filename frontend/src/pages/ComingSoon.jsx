@@ -12,7 +12,7 @@ const ComingSoon = () => {
           </div>
           <h1 className="text-4xl font-bold mb-4">Coming Soon!</h1>
           <p className="text-xl text-gray-200 mb-8">
-            We&apos;re working hard to bring you player rankings.
+            Still deciding if it is worth the headache.
           </p>
           <p className="text-gray-400">
             Stay tuned for updates and check back soon!

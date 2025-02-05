@@ -19,8 +19,8 @@ const HomePage = () => {
               <div className="max-w-4xl mx-auto text-center">
                 <h2 className="text-4xl font-bold text-white mb-8">Why BSRP Gaming?</h2>
                 <p className="text-2xl text-gray-300 leading-relaxed">
-                  We built BSRP Gaming to revolutionize the tournament experience. Our platform streamlines 
-                  tournament organization, making it easier for hosts to create and manage competitions while 
+                  Formally known as GHML Gaming, we created BSRP Gaming to revolutionize the tournament experience. 
+                  Our platform streamlines tournament organization, making it easier for hosts to create and manage tournaments while 
                   providing players with a seamless competitive environment.
                 </p>
               </div>
