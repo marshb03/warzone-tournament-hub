@@ -10,11 +10,11 @@ import host2Logo from '../../assets/images/host2-logo.png';
 
 // Static host configuration - based on usernames
 const HOSTS_CONFIG = {
-  'string': {  // Admin host
+  'BSRP Gaming': {  // Admin host
     logo: host1Logo,
     description: "Administrator and lead tournament organizer for EliteForge.",
-    twitter: "https://twitter.com/eliteforge",
-    discord: "https://discord.gg/eliteforge"
+    twitter: "https://twitter.com/ghmlgaming",
+    discord: "https://discord.gg/WEkdnbeCJh"
   },
   'Brett': {  // Brett's configuration
     logo: host2Logo,
@@ -73,7 +73,7 @@ const HostCard = ({ host }) => {
           {host.tournaments_count} Tournament{host.tournaments_count !== 1 ? 's' : ''} Hosted
         </span>
         <span>
-          {host.total_teams} Team{host.total_teams !== 1 ? 's' : ''} Managed
+          {host.total_teams} Total Team{host.total_teams !== 1 ? 's' : ''} 
         </span>
       </div>
 

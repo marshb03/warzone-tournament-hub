@@ -64,7 +64,7 @@ const Footer = () => {
               </div>
               <div className="flex items-center space-x-4">
                 <a 
-                  href="https://twitter.com/EliteForge" 
+                  href="https://twitter.com/ghmlgaming" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="text-gray-300 hover:text-[#1DA1F2] transition-colors"
@@ -72,7 +72,7 @@ const Footer = () => {
                   <Twitter className="h-5 w-5" />
                 </a>
                 <a 
-                  href="https://discord.gg/eliteforge" 
+                  href="https://discord.gg/WEkdnbeCJh" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="text-gray-300 hover:text-[#7289DA] transition-colors"
