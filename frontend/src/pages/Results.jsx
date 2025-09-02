@@ -1,7 +1,7 @@
 // src/pages/Results.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Trophy, Calendar, Users, Search, Filter, User } from 'lucide-react';
+import { Trophy, Calendar, Users, Search, Filter, User, Gamepad2, DollarSign, Clock } from 'lucide-react';
 import Card from '../components/ui/Card';
 import { tournamentService } from '../services/tournament';
 import PageBackground from '../components/backgrounds/PageBackground'
@@ -78,7 +78,9 @@ const Results = () => {
   const filteredTournaments = tournaments.filter(tournament => {
     return tournament.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
            tournament.creator_username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-           tournament.winningTeam?.toLowerCase().includes(searchTerm.toLowerCase());
+           tournament.winningTeam?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           tournament.game?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           tournament.game_mode?.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
   // Sort tournaments
@@ -96,10 +98,23 @@ const Results = () => {
         return (a.winningTeam || '').localeCompare(b.winningTeam || '');
       case 'winner-desc':
         return (b.winningTeam || '').localeCompare(a.winningTeam || '');
+      case 'game-asc':
+        return (a.game || '').localeCompare(b.game || '');
+      case 'game-desc':
+        return (b.game || '').localeCompare(a.game || '');
       default:
         return 0;
     }
   });
+
+  const formatTournamentFormat = (format) => {
+    switch(format) {
+      case 'SINGLE_ELIMINATION': return 'Single Elimination';
+      case 'DOUBLE_ELIMINATION': return 'Double Elimination';
+      case 'TKR': return 'TKR';
+      default: return format?.replace('_', ' ') || 'Single Elimination';
+    }
+  };
 
   if (loading) {
     return (
@@ -123,7 +138,7 @@ const Results = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
               <input
                 type="text"
-                placeholder="Search by tournament name, winner, or host..."
+                placeholder="Search by tournament name, winner, host, game, or mode..."
                 className="w-full pl-10 pr-4 py-2 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2979FF]"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -142,6 +157,8 @@ const Results = () => {
                 <option value="name-desc">Tournament Name (Z-A)</option>
                 <option value="winner-asc">Winner Name (A-Z)</option>
                 <option value="winner-desc">Winner Name (Z-A)</option>
+                <option value="game-asc">Game (A-Z)</option>
+                <option value="game-desc">Game (Z-A)</option>
               </select>
             </div>
           </div>
@@ -149,35 +166,94 @@ const Results = () => {
 
         {sortedTournaments.length === 0 ? (
           <Card className="p-6 text-center text-gray-400">
-            No completed tournaments available
+            {tournaments.length === 0 
+              ? "No completed tournaments available"
+              : "No tournaments match your search criteria"
+            }
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {sortedTournaments.map(tournament => (
               <Card 
                 key={tournament.id}
-                className="cursor-pointer hover:shadow-lg transition-all duration-300 hover:scale-105"
+                className="cursor-pointer hover:shadow-lg hover:shadow-[#2979FF]/10 transition-all duration-300 hover:scale-105"
                 onClick={() => navigate(`/tournaments/${tournament.id}`)}
               >
                 <div className="p-6">
-                  <h2 className="text-2xl text-white font-bold mb-4">{tournament.name}</h2>
+                  {/* Header */}
+                  <div className="mb-4">
+                    <h2 className="text-xl text-white font-bold mb-2">{tournament.name}</h2>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-400">
+                        {formatTournamentFormat(tournament.format)}
+                      </span>
+                      <span className={`font-medium ${tournament.entry_fee && tournament.entry_fee !== 'Free' ? 'text-green-400 font-bold' : 'text-gray-300'}`}>
+                        {tournament.entry_fee || 'Free'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Game Information */}
+                  <div className="mb-4 space-y-2">
+                    <div className="flex items-center gap-2 text-gray-300">
+                      <Gamepad2 className="h-4 w-4 text-[#2979FF]" />
+                      <span className="text-sm">{tournament.game || 'Call of Duty: Warzone'}</span>
+                    </div>
+                    {tournament.game_mode && (
+                      <div className="pl-6">
+                        <span className="text-xs bg-gray-700 px-2 py-1 rounded text-gray-300">
+                          {tournament.game_mode}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Tournament Details */}
                   <div className="text-gray-300 space-y-3">
-                    <div className="flex items-center gap-3">
-                      <Trophy className="h-5 w-5 text-[#2979FF]" />
-                      <span className="text-lg">Winner: {tournament.winningTeam || 'Unknown'}</span>
+                    <div className="flex items-center gap-2">
+                      <Trophy className="h-4 w-4 text-[#2979FF]" />
+                      <span className="text-sm font-medium text-yellow-400">
+                        {tournament.winningTeam || 'Unknown'}
+                      </span>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <User className="h-5 w-5 text-[#2979FF]" />
-                      <span className="text-lg">Host: {tournament.creator_username}</span>
+                    
+                    <div className="flex items-center gap-2">
+                      <User className="h-4 w-4 text-[#2979FF]" />
+                      <span className="text-sm">Host: {tournament.creator_username}</span>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <Calendar className="h-5 w-5 text-[#2979FF]" />
-                      <span className="text-lg">Completed: {new Date(tournament.end_date).toLocaleDateString()}</span>
+                    
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-[#2979FF]" />
+                      <span className="text-sm">
+                        {new Date(tournament.end_date).toLocaleDateString()}
+                      </span>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <Users className="h-5 w-5 text-[#2979FF]" />
-                      <span className="text-lg">Teams: {tournament.current_teams}/{tournament.max_teams}</span>
+                    
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4 text-[#2979FF]" />
+                      <span className="text-sm">
+                        {tournament.format === 'TKR' 
+                          ? `${tournament.current_teams} teams`
+                          : `${tournament.current_teams}/${tournament.max_teams} teams`
+                        }
+                      </span>
                     </div>
+
+                    {/* Start Date/Time for additional context */}
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-[#2979FF]" />
+                      <span className="text-sm">
+                        Started: {new Date(tournament.start_date).toLocaleDateString()}
+                        {tournament.start_time && ` at ${tournament.start_time}`}
+                      </span>
+                    </div>
+
+                    {/* TKR End Time if available */}
+                    {tournament.format === 'TKR' && tournament.end_time && (
+                      <div className="text-xs text-gray-400 mt-2">
+                        Duration: {tournament.start_time} - {tournament.end_time} (EST)
+                      </div>
+                    )}
                   </div>
                 </div>
               </Card>

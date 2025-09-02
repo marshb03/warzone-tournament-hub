@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str
 
     # Frontend URL for reset password and verification links
-    FRONTEND_URL: str = "https://bsrpgaming.com"  # Updated for production
+    FRONTEND_URL: str = "https://bsrpgaming.com"
 
     # Email settings for ranking form
     EMAIL_FROM: Optional[str] = None
@@ -27,8 +27,13 @@ class Settings(BaseSettings):
     SMTP_TLS: bool = True
 
     # Additional email settings for auth
-    EMAIL_FROM_ADDRESS: str = "buildsbybrett@gmail.com"  # Updated for production
+    EMAIL_FROM_ADDRESS: str = "buildsbybrett@gmail.com"
     EMAIL_FROM_NAME: str = "BSRP Gaming"
+
+    # Cloudinary settings
+    CLOUDINARY_CLOUD_NAME: str
+    CLOUDINARY_API_KEY: str
+    CLOUDINARY_API_SECRET: str
 
     @field_validator('EMAIL_RECIPIENTS')
     @classmethod

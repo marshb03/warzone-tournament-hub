@@ -8,7 +8,7 @@ from app.models.base import Base
 class UserRole(str, enum.Enum):
     USER = "USER"
     HOST = "HOST"
-    SUPER_ADMIN = "SUPER_ADMIN"  # If you have this in a separate file
+    SUPER_ADMIN = "SUPER_ADMIN"
 
 class User(Base):
     __tablename__ = "users"
@@ -23,12 +23,17 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now()) 
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())  
     
-
-    # Add these relationships
+    # Relationships
     created_tournaments = relationship("Tournament", back_populates="creator")
     teams = relationship("Team", secondary="team_player", back_populates="players")
     activities = relationship("ActivityLog", back_populates="user")
     host_applications = relationship("HostApplication", back_populates="user")
+    
+    # Add the missing host_profile relationship
+    host_profile = relationship("HostProfile", back_populates="user", uselist=False)
+    
+    # Add the social links relationship
+    social_links = relationship("UserSocialLink", back_populates="user", cascade="all, delete-orphan")
 
     @property
     def is_superuser(self):

@@ -1,6 +1,10 @@
-// src/services/index.js
+// src/services/index.ts
 export { authService } from './auth';
-export { tournamentService } from './tournament';
 export { userService } from './user';
-export { teamService } from './team';
 export { adminService } from './admin';
+export { tournamentService } from './tournament';
+export { teamService } from './team';
+export { matchService } from './match';
+export { leaderboardService } from './leaderboard';
+export { socialLinksService } from './socialLinks';
+export * from './api';

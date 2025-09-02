@@ -27,6 +27,11 @@ class User(UserBase):
     role: UserRole
     is_active: bool
     is_verified: bool
+    
+    # Include logo fields from host profile (if exists)
+    logo_url: Optional[str] = None
+    logo_public_id: Optional[str] = None
+    organization_name: Optional[str] = None
 
     @property
     def is_superuser(self) -> bool:

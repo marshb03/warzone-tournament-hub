@@ -8,6 +8,7 @@ from datetime import datetime
 class TournamentFormat(enum.Enum):
     SINGLE_ELIMINATION = "SINGLE_ELIMINATION"
     DOUBLE_ELIMINATION = "DOUBLE_ELIMINATION"
+    TKR = "TKR"
  
 class TournamentStatus(enum.Enum):
     PENDING = "PENDING"
@@ -24,6 +25,7 @@ class Tournament(Base):
     start_date = Column(DateTime, default=datetime.utcnow)
     start_time = Column(String, nullable=True)
     end_date = Column(DateTime, nullable=True)
+    end_time = Column(String, nullable=True)  # Add end_time field
     team_size = Column(Integer, nullable=True)
     max_teams = Column(Integer, nullable=True)
     current_teams = Column(Integer, default=0)
@@ -32,7 +34,12 @@ class Tournament(Base):
     description = Column(String, nullable=True)
     rules = Column(String, nullable=True)
     
-    # New field for bracket configuration
+    # New enhancement fields
+    entry_fee = Column(String, nullable=True)  # "Free" or "$XX.XX" format
+    game = Column(String, nullable=True)
+    game_mode = Column(String, nullable=True)
+    
+    # Existing field for bracket configuration
     bracket_config = Column(JSON, nullable=True)
  
     # Relationships

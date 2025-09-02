@@ -7,15 +7,21 @@ from app.core.config import settings
 
 pwd_context = CryptContext(schemes=["sha256_crypt"], deprecated="auto")
 
-TokenType = Literal["password_reset", "email_verification", "profile_update"]
+TokenType = Literal["access", "password_reset", "email_verification", "profile_update"]
 
 def create_token(subject: Union[str, Any], token_type: TokenType, expires_delta: timedelta = None) -> str:
     """Generic token creation for both password reset and email verification"""
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
-        # 24 hours for password reset, 72 hours for email verification
-        hours = 24 if token_type == "password_reset" else 72
+        # Default expiration times based on token type
+        hours_map = {
+            "access": 24,
+            "password_reset": 24,
+            "email_verification": 72,
+            "profile_update": 1
+        }
+        hours = hours_map.get(token_type, 24)
         expire = datetime.utcnow() + timedelta(hours=hours)
         
     to_encode = {
@@ -36,6 +42,9 @@ def verify_token(token: str, token_type: TokenType) -> Optional[int]:
         return None
 
 # Specific token functions
+def create_access_token(user_id: int) -> str:
+    return create_token(user_id, "access")
+
 def create_password_reset_token(user_id: int) -> str:
     return create_token(user_id, "password_reset")
 
@@ -50,7 +59,6 @@ def verify_email_verification_token(token: str) -> Optional[int]:
 
 # Existing password functions
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-
     result = pwd_context.verify(plain_password, hashed_password)
     if not result:
         # Try hashing the plain password to compare formats
@@ -58,7 +66,6 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return result
 
 def get_password_hash(password: str) -> str:
-
     result = pwd_context.hash(password)
     return result
 

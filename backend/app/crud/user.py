@@ -4,7 +4,9 @@ from sqlalchemy import or_
 from fastapi import HTTPException
 from typing import Optional, List
 from app.models.user import User, UserRole
+from app.models.host_profile import HostProfile
 from app.schemas.user import UserCreate, UserUpdate
+from app.schemas.host_profile import HostProfileCreate
 from app.core.security import get_password_hash, verify_password
 
 def get_user(db: Session, user_id: int) -> Optional[User]:
@@ -74,13 +76,28 @@ def update_user(db: Session, user_id: int, user_update: UserUpdate) -> Optional[
     db.refresh(db_user)
     return db_user
 
+def create_host_profile_for_user(db: Session, user: User) -> HostProfile:
+    """Create a default host profile for a user"""
+    host_profile_data = HostProfileCreate(
+        user_id=user.id,
+        organization_name=user.username,  # Default to username
+        description=None,
+        banner_path=None
+    )
+    
+    db_profile = HostProfile(**host_profile_data.dict())
+    db.add(db_profile)
+    db.commit()
+    db.refresh(db_profile)
+    return db_profile
+
 def update_user_role(
     db: Session,
     user_id: int,
     new_role: UserRole,
     super_admin_id: int
 ) -> Optional[User]:
-    """Update user role with additional checks"""
+    """Update user role with additional checks and auto-create host profile"""
     if user_id == super_admin_id:
         raise HTTPException(
             status_code=400,
@@ -102,9 +119,28 @@ def update_user_role(
                 detail="A super admin already exists"
             )
     
+    # Store old role to check if we need to create/remove host profile
+    old_role = db_user.role
+    
+    # Update the role
     db_user.role = new_role
     db.commit()
     db.refresh(db_user)
+    
+    # Auto-create host profile if promoting to HOST
+    if new_role == UserRole.HOST and old_role != UserRole.HOST:
+        # Check if host profile already exists
+        existing_profile = db.query(HostProfile).filter(
+            HostProfile.user_id == user_id
+        ).first()
+        
+        if not existing_profile:
+            create_host_profile_for_user(db, db_user)
+            print(f"Created host profile for user {db_user.username}")
+    
+    # Note: We don't delete host profiles when demoting from HOST
+    # in case they get promoted again later
+    
     return db_user
 
 def toggle_user_active_status(

@@ -11,6 +11,8 @@ from app.schemas.host_profile import (
     HostProfileUpdate
 )
 from app.crud import host_profile as crud
+from app.crud import host_profile as host_crud
+from app.crud import user as user_crud
 
 router = APIRouter()
 
@@ -56,12 +58,29 @@ async def update_host_profile(
     user_id: int,
     profile_update: HostProfileUpdate,
     db: Session = Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_super_admin)
+    current_user: User = Depends(deps.get_current_active_user)
 ):
     """
-    Update a host profile (Super Admin only).
+    Update a host profile.
+    Users can update their own profile, Super Admins can update any profile.
     """
-    updated_profile = crud.update_host_profile(db, user_id, profile_update)
+    # Check permissions: user can update their own profile OR user is super admin
+    if current_user.id != user_id and current_user.role != UserRole.SUPER_ADMIN:
+        raise HTTPException(
+            status_code=403,
+            detail="You can only update your own host profile"
+        )
+    
+    # Verify the target user is actually a host - use the correct import
+    target_user = user_crud.get_user(db, user_id)  # Changed from crud.user to user_crud
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if target_user.role not in [UserRole.HOST, UserRole.SUPER_ADMIN]:
+        raise HTTPException(status_code=400, detail="User is not a host")
+    
+    # Use the correct import for host profile operations
+    updated_profile = host_crud.update_host_profile(db, user_id, profile_update)
     if not updated_profile:
         raise HTTPException(status_code=404, detail="Host profile not found")
     return updated_profile
@@ -92,3 +111,4 @@ async def get_host_profile(
     if not profile:
         raise HTTPException(status_code=404, detail="Host profile not found")
     return profile
+

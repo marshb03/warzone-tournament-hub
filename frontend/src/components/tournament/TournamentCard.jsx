@@ -1,6 +1,6 @@
 // src/components/tournament/TournamentCard.jsx
 import React from 'react';
-import { Calendar, Users, Trophy, Clock, ChevronRight } from 'lucide-react';
+import { Calendar, Users, Trophy, Clock, ChevronRight, Gamepad2, DollarSign } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
@@ -33,12 +33,15 @@ const TournamentCard = ({ tournament, isOwner, userRole }) => {
     team_size,
     max_teams,
     current_teams = 0,
-    creator_username
+    creator_username,
+    entry_fee,
+    game,
+    game_mode
   } = tournament;
 
   const canManageTournament = 
-  userRole === UserRole.SUPER_ADMIN || 
-  (userRole === UserRole.HOST && isOwner);
+    userRole === UserRole.SUPER_ADMIN || 
+    (userRole === UserRole.HOST && isOwner);
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -54,6 +57,15 @@ const TournamentCard = ({ tournament, isOwner, userRole }) => {
       minute: '2-digit',
       hour12: true
     });
+  };
+
+  const formatTournamentFormat = (format) => {
+    switch(format) {
+      case 'SINGLE_ELIMINATION': return 'Single Elimination';
+      case 'DOUBLE_ELIMINATION': return 'Double Elimination';
+      case 'TKR': return 'TKR';
+      default: return format?.replace('_', ' ') || 'Single Elimination';
+    }
   };
 
   return (
@@ -73,6 +85,29 @@ const TournamentCard = ({ tournament, isOwner, userRole }) => {
           </div>
           <StatusBadge status={status} />
         </div>
+
+        {/* Game and Entry Fee Row */}
+        <div className="flex items-center justify-between text-gray-300 text-sm mt-2">
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center">
+              <Gamepad2 className="h-4 w-4 mr-1" />
+              <span>{game || 'Call of Duty: Warzone'}</span>
+            </div>
+            {game_mode && (
+              <span className="text-xs bg-gray-700 px-2 py-1 rounded">
+                {game_mode}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center">
+            <DollarSign className="h-4 w-4 mr-1" />
+            <span className={`font-medium ${entry_fee && entry_fee !== 'Free' ? 'text-green-400 font-bold' : ''}`}>
+              {entry_fee || 'Free'}
+            </span>
+          </div>
+        </div>
+
+        {/* Date and Time Row */}
         <div className="flex items-center text-gray-300 text-sm mt-2 space-x-4">
           <div className="flex items-center">
             <Calendar className="h-4 w-4 mr-1" />
@@ -80,7 +115,7 @@ const TournamentCard = ({ tournament, isOwner, userRole }) => {
           </div>
           <div className="flex items-center">
             <Clock className="h-4 w-4 mr-1" />
-            <span>{formatTime(start_time)}</span>
+            <span>{formatTime(start_time)} EST</span>
           </div>
         </div>
       </div>
@@ -99,7 +134,7 @@ const TournamentCard = ({ tournament, isOwner, userRole }) => {
             <div>
               <p className="text-sm">Format</p>
               <p className="font-medium text-white">
-                {format.replace('_', ' ')}
+                {formatTournamentFormat(format)}
               </p>
             </div>
           </div>
@@ -108,14 +143,22 @@ const TournamentCard = ({ tournament, isOwner, userRole }) => {
         <div>
           <div className="flex justify-between text-sm mb-1">
             <span className="text-gray-300">Teams Registered</span>
-            <span className="text-white font-medium">{current_teams}/{max_teams}</span>
+            <span className="text-white font-medium">
+              {format === 'TKR' 
+                ? `${current_teams} teams`
+                : `${current_teams}/${max_teams}`
+              }
+            </span>
           </div>
-          <div className="w-full bg-gray-700 rounded-full h-2">
-            <div 
-              className="bg-[#2979FF] h-2 rounded-full transition-all duration-500"
-              style={{ width: `${(current_teams / max_teams) * 100}%` }}
-            />
-          </div>
+          {/* Only show progress bar for non-TKR tournaments */}
+          {format !== 'TKR' && (
+            <div className="w-full bg-gray-700 rounded-full h-2">
+              <div 
+                className="bg-[#2979FF] h-2 rounded-full transition-all duration-500"
+                style={{ width: `${(current_teams / max_teams) * 100}%` }}
+              />
+            </div>
+          )}
         </div>
 
         <div className="flex justify-between items-center pt-2">

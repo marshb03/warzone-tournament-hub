@@ -5,7 +5,12 @@ import logging
 from .api.v1.api import api_router
 from .core.config import settings
 from .db.database import engine, Base
-from app.models import Base, Tournament, Team, Match, LeaderboardEntry, User
+
+# Import all models to ensure they're registered
+from app.models import (
+    Base, Tournament, Team, Match, LeaderboardEntry, User, 
+    HostProfile, UserSocialLink  # Add new models
+)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

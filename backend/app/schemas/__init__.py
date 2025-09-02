@@ -8,3 +8,4 @@ from .leaderboard import LeaderboardEntry, LeaderboardEntry, LeaderboardEntryCre
 from .losers_match import LosersMatch, LosersMatchCreate, DoubleBracketResponse
 from .host_profile import HostProfile, HostProfileBase, HostProfileCreate, HostProfileUpdate, HostStatistics
 from .host_application import HostApplication, HostApplicationBase, HostApplicationCreate, HostApplicationUpdate
+from .social_links import SocialLink, SocialLinkBase, SocialLinkCreate, SocialLinkUpdate, SocialPlatform

@@ -4,9 +4,11 @@ from datetime import datetime
 from typing import List, Optional, Dict
 from enum import Enum
 from .user import UserInTournament 
+
 class TournamentFormat(str, Enum):
     SINGLE_ELIMINATION = "SINGLE_ELIMINATION"
     DOUBLE_ELIMINATION = "DOUBLE_ELIMINATION"
+    TKR = "TKR"
     
 class TournamentStatus(str, Enum):
     PENDING = "PENDING"
@@ -41,13 +43,18 @@ class TournamentBase(BaseModel):
     format: TournamentFormat
     start_date: datetime
     start_time: Optional[str] = None
+    end_date: Optional[datetime] = None
+    end_time: Optional[str] = None  # Add end_time field
     team_size: Optional[int] = None
     max_teams: Optional[int] = None
     current_teams: int = 0
-    end_date: Optional[datetime] = None
     bracket_config: Optional[TournamentBracketConfig] = None
     description: Optional[str] = None
     rules: Optional[str] = None
+    # New enhancement fields
+    entry_fee: Optional[str] = None
+    game: Optional[str] = None
+    game_mode: Optional[str] = None
 
     @validator('team_size')
     def validate_team_size(cls, v):
@@ -56,12 +63,31 @@ class TournamentBase(BaseModel):
         return v
 
     @validator('max_teams')
-    def validate_max_teams(cls, v):
+    def validate_max_teams(cls, v, values):
+        format_value = values.get('format')
+        if format_value == TournamentFormat.TKR:
+            return None  # TKR tournaments don't have max teams
         if v is not None:
             if v < 4:
-                raise ValueError('Tournament must allow at least 4 teams')
+                raise ValueError('Single and Double Elimination tournaments must allow at least 4 teams')
             if v > 32:
                 raise ValueError('Tournament cannot have more than 32 teams')
+        return v
+
+    @validator('entry_fee')
+    def validate_entry_fee(cls, v):
+        if v is not None:
+            if v == "Free":
+                return v
+            # Check if it matches $XX.XX format
+            if v.startswith('$') and len(v) > 1:
+                try:
+                    float(v[1:])  # Try to parse the number after $
+                    return v
+                except ValueError:
+                    raise ValueError('Entry fee must be "Free" or in format "$XX.XX"')
+            else:
+                raise ValueError('Entry fee must be "Free" or start with "$"')
         return v
 
 class TournamentCreate(BaseModel):
@@ -70,23 +96,33 @@ class TournamentCreate(BaseModel):
     start_date: datetime
     start_time: str
     end_date: datetime
+    end_time: Optional[str] = None  # Add end_time field
     team_size: int
-    max_teams: int
+    max_teams: Optional[int] = None  # Make optional for TKR
     bracket_config: Optional[TournamentBracketConfig] = None
     description: Optional[str] = None
     rules: Optional[str] = None
+    # New enhancement fields with defaults
+    entry_fee: str = "Free"
+    game: str = "Call of Duty: Warzone"
+    game_mode: str = "Battle Royale"
 
 class TournamentUpdate(BaseModel):
     name: Optional[str] = None
     format: Optional[TournamentFormat] = None
     start_date: Optional[datetime] = None
     start_time: Optional[str] = None
+    end_date: Optional[datetime] = None
+    end_time: Optional[str] = None  # Add end_time field
     team_size: Optional[int] = None
     max_teams: Optional[int] = None
-    end_date: Optional[datetime] = None
     bracket_config: Optional[TournamentBracketConfig] = None
     description: Optional[str] = None
     rules: Optional[str] = None
+    # New enhancement fields
+    entry_fee: Optional[str] = None
+    game: Optional[str] = None
+    game_mode: Optional[str] = None
 
     @validator('team_size')
     def validate_team_size_update(cls, v):
@@ -102,6 +138,23 @@ class TournamentUpdate(BaseModel):
             if v > 32:
                 raise ValueError('Tournament cannot have more than 32 teams')
         return v
+
+    @validator('entry_fee')
+    def validate_entry_fee(cls, v):
+        if v is not None:
+            if v == "Free":
+                return v
+            # Check if it matches $XX.XX format
+            if v.startswith('$') and len(v) > 1:
+                try:
+                    float(v[1:])  # Try to parse the number after $
+                    return v
+                except ValueError:
+                    raise ValueError('Entry fee must be "Free" or in format "$XX.XX"')
+            else:
+                raise ValueError('Entry fee must be "Free" or start with "$"')
+        return v
+
 class Tournament(BaseModel):
     id: int
     name: str
@@ -109,6 +162,7 @@ class Tournament(BaseModel):
     start_date: datetime
     start_time: Optional[str]
     end_date: Optional[datetime]
+    end_time: Optional[str] = None  # Add end_time field
     team_size: Optional[int]
     max_teams: Optional[int]
     current_teams: int = 0
@@ -119,6 +173,10 @@ class Tournament(BaseModel):
     bracket_config: Optional[TournamentBracketConfig] = None
     description: Optional[str] = None
     rules: Optional[str] = None
+    # New enhancement fields
+    entry_fee: Optional[str] = None
+    game: Optional[str] = None
+    game_mode: Optional[str] = None
 
     @validator('creator_username', always=True)
     def get_creator_username(cls, v, values):

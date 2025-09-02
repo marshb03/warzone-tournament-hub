@@ -31,6 +31,7 @@ async def get_current_user(
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
+        # Use "access" token type for authentication
         user_id = verify_token(token, "access")
         if user_id is None:
             raise credentials_exception

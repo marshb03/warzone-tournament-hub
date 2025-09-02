@@ -11,12 +11,17 @@ def create_tournament(db: Session, tournament: TournamentCreate, creator_id: int
         start_date=tournament.start_date,
         start_time=tournament.start_time,
         end_date=tournament.end_date,
+        end_time=tournament.end_time,  # Add end_time
         team_size=tournament.team_size,
         max_teams=tournament.max_teams,
         creator_id=creator_id,
         status=TournamentStatus.PENDING,
         current_teams=0,
-        bracket_config=tournament.bracket_config.dict() if tournament.bracket_config else None
+        bracket_config=tournament.bracket_config.dict() if tournament.bracket_config else None,
+        # New enhancement fields
+        entry_fee=tournament.entry_fee,
+        game=tournament.game,
+        game_mode=tournament.game_mode
     )
     db.add(db_tournament)
     db.commit()
@@ -53,7 +58,7 @@ def update_tournament(db: Session, tournament_id: int, tournament_update: Tourna
         elif hasattr(update_data['bracket_config'], 'dict'):
             update_data['bracket_config'] = update_data['bracket_config'].dict()
     
-    # Update the tournament attributes
+    # Update the tournament attributes (including new enhancement fields)
     for field, value in update_data.items():
         setattr(db_tournament, field, value)
     

@@ -1,19 +1,24 @@
-// src/pages/Profile.jsx
+// src/pages/Profile.tsx
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { userService } from '../services/user';
 import ProfileSettings from '../components/profile/ProfileSettings';
 import ApplicationStatus from '../components/profile/ApplicationStatus';
+import LogoUpload from '../components/profile/LogoUpload';
+import SocialLinksManager from '../components/profile/SocialLinksManager';
+import HostProfileManager from '../components/profile/HostProfileManager';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import { Trophy, Users, Shield, Settings } from 'lucide-react';
 import PageBackground from '../components/backgrounds/PageBackground';
 
-const Profile = () => {
-  const { user } = useAuth();
+const Profile: React.FC = () => {
+  const { user, refreshUser } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const getRoleDisplay = (role) => {
+  const getRoleDisplay = (role: string) => {
     switch (role) {
       case 'SUPER_ADMIN':
         return {
@@ -33,7 +38,49 @@ const Profile = () => {
     }
   };
 
-  const roleInfo = getRoleDisplay(user?.role);
+  const handleLogoUpdate = async (file: File) => {
+    try {
+      setIsLoading(true);
+      
+      // Call the backend API to update logo with file
+      await userService.updateUserLogo(file);
+
+      // Refresh user data from the backend
+      await refreshUser();
+
+      console.log('Logo updated successfully');
+    } catch (error) {
+      console.error('Failed to update logo:', error);
+      throw error; // Re-throw so LogoUpload component can show error
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLogoRemove = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Call the backend API to remove logo
+      await userService.removeUserLogo();
+
+      // Refresh user data from the backend
+      await refreshUser();
+
+      console.log('Logo removed successfully');
+    } catch (error) {
+      console.error('Failed to remove logo:', error);
+      throw error; // Re-throw so LogoUpload component can show error
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (!user) {
+    return <div>Loading...</div>;
+  }
+
+  const roleInfo = getRoleDisplay(user.role);
 
   return (
     <PageBackground>
@@ -41,7 +88,7 @@ const Profile = () => {
         <h1 className="text-3xl font-bold text-white mb-6">Profile</h1>
         
         <div className="space-y-6">
-          {/* Basic Info Card */}
+          {/* Basic Info Card with Logo Upload */}
           <Card className="p-6">
             <div className="flex justify-between items-start mb-6">
               <div>
@@ -58,14 +105,33 @@ const Profile = () => {
               </Button>
             </div>
 
+            {/* Logo Upload Section - Only for Hosts */}
+            {(user.role === 'HOST' || user.role === 'SUPER_ADMIN') && (
+              <div className="mb-8 pb-6 border-b border-gray-700">
+                <h3 className="text-lg font-semibold text-white mb-4">Organization Logo</h3>
+                <LogoUpload
+                  currentLogoUrl={user.logo_url}
+                  organizationName={user.organization_name || user.username}
+                  onLogoUpdate={handleLogoUpdate}
+                  onLogoRemove={handleLogoRemove}
+                />
+                {isLoading && (
+                  <div className="mt-2 text-sm text-gray-400">
+                    Updating profile...
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* User Information */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <p className="text-sm text-gray-400 mb-1">Username</p>
-                <p className="font-medium text-white">{user?.username}</p>
+                <p className="font-medium text-white">{user.username}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-400 mb-1">Email</p>
-                <p className="font-medium text-white">{user?.email}</p>
+                <p className="font-medium text-white">{user.email}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-400 mb-1">Role</p>
@@ -76,19 +142,29 @@ const Profile = () => {
               <div>
                 <p className="text-sm text-gray-400 mb-1">Status</p>
                 <span className={`inline-block px-3 py-1 rounded-full text-sm ${
-                  user?.is_active ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'
+                  user.is_active ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'
                 }`}>
-                  {user?.is_active ? 'Active' : 'Inactive'}
+                  {user.is_active ? 'Active' : 'Inactive'}
                 </span>
               </div>
             </div>
+          </Card>
+
+          {/* Host Profile Section - Only for Hosts */}
+          {(user.role === 'HOST' || user.role === 'SUPER_ADMIN') && (
+            <HostProfileManager />
+          )}
+
+          {/* Social Media Links Section - For All Users */}
+          <Card className="p-6">
+            <SocialLinksManager />
           </Card>
 
           {/* Application Status */}
           <ApplicationStatus />
 
           {/* Super Admin Section */}
-          {user?.role === 'SUPER_ADMIN' && (
+          {user.role === 'SUPER_ADMIN' && (
             <Card className="p-6">
               <h2 className="text-xl font-semibold text-white mb-4">Admin Controls</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -122,7 +198,7 @@ const Profile = () => {
           )}
 
           {/* Host Section */}
-          {user?.role === 'HOST' && (
+          {user.role === 'HOST' && (
             <Card className="p-6">
               <h2 className="text-xl font-semibold text-white mb-4">Host Controls</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
