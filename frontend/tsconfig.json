@@ -35,13 +35,12 @@
     "allowJs": true
   },
   "include": [
-    "src",
-    "vite.config.ts"
+    "src"
   ],
   "exclude": [
     "node_modules",
     "build",
-    "dist"
-  ],
-  "references": [{ "path": "./tsconfig.node.json" }]
+    "dist",
+    "vite.config.ts" 
+  ]
 }
