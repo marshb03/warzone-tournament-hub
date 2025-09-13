@@ -1,4 +1,4 @@
-# app/models/user.py
+# app/models/user.py - Updated with created_teams relationship
 from sqlalchemy import Column, Integer, String, Boolean, Enum as SQLEnum, DateTime
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -25,6 +25,7 @@ class User(Base):
     
     # Relationships
     created_tournaments = relationship("Tournament", back_populates="creator")
+    created_teams = relationship("Team", back_populates="creator")  # NEW: Teams created by this user
     teams = relationship("Team", secondary="team_player", back_populates="players")
     activities = relationship("ActivityLog", back_populates="user")
     host_applications = relationship("HostApplication", back_populates="user")

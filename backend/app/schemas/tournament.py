@@ -1,4 +1,4 @@
-# app/schemas/tournament.py
+# app/schemas/tournament.py - FIXED: Consistent field names matching database
 from pydantic import BaseModel, validator
 from datetime import datetime
 from typing import List, Optional, Dict
@@ -44,17 +44,21 @@ class TournamentBase(BaseModel):
     start_date: datetime
     start_time: Optional[str] = None
     end_date: Optional[datetime] = None
-    end_time: Optional[str] = None  # Add end_time field
+    end_time: Optional[str] = None
     team_size: Optional[int] = None
     max_teams: Optional[int] = None
     current_teams: int = 0
     bracket_config: Optional[TournamentBracketConfig] = None
     description: Optional[str] = None
     rules: Optional[str] = None
-    # New enhancement fields
+    # Enhancement fields
     entry_fee: Optional[str] = None
     game: Optional[str] = None
     game_mode: Optional[str] = None
+    # FIXED: Payment fields - match database schema
+    payment_methods: Optional[str] = None  # JSON string of payment method array
+    payment_details: Optional[str] = None  # New field from migration
+    payment_instructions: Optional[str] = None
 
     @validator('team_size')
     def validate_team_size(cls, v):
@@ -90,22 +94,35 @@ class TournamentBase(BaseModel):
                 raise ValueError('Entry fee must be "Free" or start with "$"')
         return v
 
-class TournamentCreate(BaseModel):
+class TournamentCreate(TournamentBase):
     name: str
     format: TournamentFormat
     start_date: datetime
     start_time: str
     end_date: datetime
-    end_time: Optional[str] = None  # Add end_time field
+    end_time: Optional[str] = None
     team_size: int
     max_teams: Optional[int] = None  # Make optional for TKR
     bracket_config: Optional[TournamentBracketConfig] = None
     description: Optional[str] = None
     rules: Optional[str] = None
-    # New enhancement fields with defaults
+    # Enhancement fields with defaults
     entry_fee: str = "Free"
     game: str = "Call of Duty: Warzone"
     game_mode: str = "Battle Royale"
+    # FIXED: Payment fields - consistent names
+    payment_methods: Optional[str] = None  # JSON string of multiple payment methods
+    payment_details: Optional[str] = None  # Single payment detail (legacy/compatibility)
+    payment_instructions: Optional[str] = None
+
+    # MOVED & FIXED: Payment validators for the fields that actually exist
+    @validator('payment_methods')
+    def validate_payment_methods(cls, v, values):
+        """Validate payment methods are provided for paid tournaments"""
+        entry_fee = values.get('entry_fee')
+        if entry_fee and entry_fee != 'Free' and not v:
+            raise ValueError('Payment methods are required for paid tournaments')
+        return v
 
 class TournamentUpdate(BaseModel):
     name: Optional[str] = None
@@ -113,16 +130,20 @@ class TournamentUpdate(BaseModel):
     start_date: Optional[datetime] = None
     start_time: Optional[str] = None
     end_date: Optional[datetime] = None
-    end_time: Optional[str] = None  # Add end_time field
+    end_time: Optional[str] = None
     team_size: Optional[int] = None
     max_teams: Optional[int] = None
     bracket_config: Optional[TournamentBracketConfig] = None
     description: Optional[str] = None
     rules: Optional[str] = None
-    # New enhancement fields
+    # Enhancement fields
     entry_fee: Optional[str] = None
     game: Optional[str] = None
     game_mode: Optional[str] = None
+    # FIXED: Payment fields - consistent names
+    payment_methods: Optional[str] = None
+    payment_details: Optional[str] = None
+    payment_instructions: Optional[str] = None
 
     @validator('team_size')
     def validate_team_size_update(cls, v):
@@ -162,7 +183,7 @@ class Tournament(BaseModel):
     start_date: datetime
     start_time: Optional[str]
     end_date: Optional[datetime]
-    end_time: Optional[str] = None  # Add end_time field
+    end_time: Optional[str] = None
     team_size: Optional[int]
     max_teams: Optional[int]
     current_teams: int = 0
@@ -173,10 +194,14 @@ class Tournament(BaseModel):
     bracket_config: Optional[TournamentBracketConfig] = None
     description: Optional[str] = None
     rules: Optional[str] = None
-    # New enhancement fields
+    # Enhancement fields
     entry_fee: Optional[str] = None
     game: Optional[str] = None
     game_mode: Optional[str] = None
+    # FIXED: Payment fields - consistent names
+    payment_methods: Optional[str] = None
+    payment_details: Optional[str] = None
+    payment_instructions: Optional[str] = None
 
     @validator('creator_username', always=True)
     def get_creator_username(cls, v, values):

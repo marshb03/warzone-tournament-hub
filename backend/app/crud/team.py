@@ -1,3 +1,4 @@
+# app/crud/team.py - Fixed create_team function with proper parameter handling
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.models.team import Team
@@ -11,11 +12,17 @@ def get_next_seed(db: Session, tournament_id: int) -> int:
     return 1 if max_seed is None else max_seed + 1
 
 def create_team(db: Session, team: TeamCreate):
-    """Create a new team with automatically assigned seed number."""
-    next_seed = get_next_seed(db, team.tournament_id)
+    """Create a new team with automatically assigned seed number - FIXED"""
+    # Handle both TeamCreate objects and dictionaries
+    if isinstance(team, dict):
+        team_data = team
+    else:
+        team_data = team.dict()
+    
+    next_seed = get_next_seed(db, team_data["tournament_id"])
     
     db_team = Team(
-        **team.dict(),
+        **team_data,
         seed=next_seed
     )
     db.add(db_team)

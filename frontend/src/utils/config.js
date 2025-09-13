@@ -1,4 +1,4 @@
-// src/utils/config.js
+// src/utils/config.js - Updated to include TKR endpoints
 const config = {
   apiUrl: process.env.REACT_APP_API_URL || 'http://localhost:8000',
   jwtSecret: process.env.REACT_APP_JWT_SECRET,
@@ -13,16 +13,15 @@ const config = {
   // API endpoints
   endpoints: {
       auth: {
-          // Updated to match FastAPI endpoints
           login: '/api/v1/login/access-token',
-          register: '/api/v1/users/users',  // User registration endpoint
-          testToken: '/api/v1/test-token',  // Endpoint to verify token
+          register: '/api/v1/users/users',
+          testToken: '/api/v1/test-token',
           passwordReset: '/api/v1/password-reset',
           passwordResetConfirm: '/api/v1/password-reset-confirm',
       },
       admin:{
         stats: '/api/v1/admin/stats',
-        users: '/api/v1/admin/users',  // Add this line
+        users: '/api/v1/admin/users',
         tournaments: '/api/v1/admin/tournaments'
       },
       tournaments: {
@@ -54,7 +53,43 @@ const config = {
         championship: (id) => `/api/v1/matches/championship/${id}`,
         tournament: (id) => `/api/v1/matches/tournament/${id}`,
         losersBracket: (id) => `/api/v1/losers-matches/tournament/${id}`,
-    },
+      },
+      // TKR endpoints
+      tkr: {
+        // Tournament configuration
+        createConfig: (tournamentId) => `/api/v1/tkr/tournaments/${tournamentId}/config`,
+        getConfig: (tournamentId) => `/api/v1/tkr/tournaments/${tournamentId}/config`,
+        updateConfig: (tournamentId) => `/api/v1/tkr/tournaments/${tournamentId}/config`,
+        
+        // Team registration
+        registerTeam: (tournamentId) => `/api/v1/tkr/tournaments/${tournamentId}/register`,
+        getRegistrations: (tournamentId) => `/api/v1/tkr/tournaments/${tournamentId}/registrations`,
+        updateRegistration: (registrationId) => `/api/v1/tkr/registrations/${registrationId}`,
+        
+        // Game submissions
+        submitGame: (tournamentId) => `/api/v1/tkr/tournaments/${tournamentId}/submissions`,
+        bulkSubmit: (tournamentId) => `/api/v1/tkr/tournaments/${tournamentId}/bulk-submissions`,
+        getSubmissions: (tournamentId) => `/api/v1/tkr/tournaments/${tournamentId}/submissions`,
+        updateSubmission: (submissionId) => `/api/v1/tkr/submissions/${submissionId}`,
+        deleteSubmission: (submissionId) => `/api/v1/tkr/submissions/${submissionId}`,
+        
+        // Leaderboard
+        getLeaderboard: (tournamentId) => `/api/v1/tkr/tournaments/${tournamentId}/leaderboard`,
+        refreshLeaderboard: (tournamentId) => `/api/v1/tkr/tournaments/${tournamentId}/leaderboard/refresh`,
+        
+        // Prize pool
+        getPrizePool: (tournamentId) => `/api/v1/tkr/tournaments/${tournamentId}/prize-pool`,
+        
+        // Templates
+        createTemplate: '/api/v1/tkr/templates',
+        getTemplates: '/api/v1/tkr/templates',
+        getTemplate: (templateId) => `/api/v1/tkr/templates/${templateId}`,
+        updateTemplate: (templateId) => `/api/v1/tkr/templates/${templateId}`,
+        deleteTemplate: (templateId) => `/api/v1/tkr/templates/${templateId}`,
+        
+        // Combined details
+        getTournamentDetails: (tournamentId) => `/api/v1/tkr/tournaments/${tournamentId}/details`
+      }
   },
 
   // Auth settings
@@ -69,11 +104,9 @@ const config = {
 // Validate required environment variables
 const requiredVars = [
   'REACT_APP_API_URL',
-  // Add other required variables as needed
 ];
 
 if (config.isDevelopment || config.isTest) {
-  // Only validate in development and test environments
   for (const varName of requiredVars) {
       if (!process.env[varName]) {
           console.error(`Missing required environment variable: ${varName}`);

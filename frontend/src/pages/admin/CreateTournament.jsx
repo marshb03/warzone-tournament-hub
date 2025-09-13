@@ -1,4 +1,4 @@
-// src/pages/admin/CreateTournament.jsx
+// src/pages/admin/CreateTournament.jsx - Complete version with fixed payment fields
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -34,6 +34,15 @@ const CreateTournament = () => {
     custom_game: '',
     game_mode: 'Battle Royale',
     custom_game_mode: '',
+    // Payment fields
+    payment_methods: [], // Array of payment methods
+    payment_instructions: ''
+  });
+
+  // State for adding payment methods
+  const [currentPaymentMethod, setCurrentPaymentMethod] = useState({
+    method: '',
+    details: ''
   });
 
   // Game options
@@ -49,6 +58,16 @@ const CreateTournament = () => {
     'Battle Royale',
     'Resurgence',
     'Multiplayer',
+    'Other'
+  ];
+
+  // Payment method options
+  const paymentMethodOptions = [
+    'PayPal',
+    'Venmo',
+    'CashApp',
+    'Zelle',
+    'Bank Transfer',
     'Other'
   ];
 
@@ -81,7 +100,10 @@ const CreateTournament = () => {
     setFormData(prev => ({
       ...prev,
       entry_fee: value,
-      entry_fee_amount: value === 'Free' ? '' : prev.entry_fee_amount
+      entry_fee_amount: value === 'Free' ? '' : prev.entry_fee_amount,
+      // Reset payment fields when changing to Free
+      payment_methods: value === 'Free' ? [] : prev.payment_methods,
+      payment_instructions: value === 'Free' ? '' : prev.payment_instructions
     }));
   };
 
@@ -94,6 +116,24 @@ const CreateTournament = () => {
         entry_fee_amount: value
       }));
     }
+  };
+
+  // Payment method functions
+  const addPaymentMethod = () => {
+    if (currentPaymentMethod.method && currentPaymentMethod.details) {
+      setFormData(prev => ({
+        ...prev,
+        payment_methods: [...prev.payment_methods, currentPaymentMethod]
+      }));
+      setCurrentPaymentMethod({ method: '', details: '' });
+    }
+  };
+
+  const removePaymentMethod = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      payment_methods: prev.payment_methods.filter((_, i) => i !== index)
+    }));
   };
 
   const getEntryFeeValue = () => {
@@ -147,6 +187,13 @@ const CreateTournament = () => {
       if (formData.entry_fee === 'Paid' && (!formData.entry_fee_amount || parseFloat(formData.entry_fee_amount) <= 0)) {
         throw new Error('Please enter a valid entry fee amount');
       }
+
+      // Validate payment information for paid tournaments
+      if (formData.entry_fee === 'Paid') {
+        if (formData.payment_methods.length === 0) {
+          throw new Error('Please add at least one payment method');
+        }
+      }
   
       // Prepare dates
       const startDate = new Date(formData.start_date + 'T' + formData.start_time);
@@ -166,6 +213,7 @@ const CreateTournament = () => {
         start_date: startDate.toISOString(),
         start_time: formData.start_time,
         end_date: endDate.toISOString(),
+        end_time: formData.format === 'TKR' ? formData.end_time : undefined,
         team_size: Number(formData.team_size),
         max_teams: formData.format === 'TKR' ? null : Number(formData.max_teams), // No max teams for TKR
         current_teams: 0,
@@ -174,7 +222,10 @@ const CreateTournament = () => {
         // New enhancement fields
         entry_fee: getEntryFeeValue(),
         game: getGameValue(),
-        game_mode: getGameModeValue()
+        game_mode: getGameModeValue(),
+        // Payment information - send as JSON string
+        payment_methods: formData.entry_fee === 'Paid' ? JSON.stringify(formData.payment_methods) : null,
+        payment_instructions: formData.entry_fee === 'Paid' ? formData.payment_instructions : null
       };
   
       console.log('Tournament Data:', tournamentData);
@@ -284,7 +335,7 @@ const CreateTournament = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Entry Fee</label>
+              <label className="block text-sm font-medium mb-1">Team Entry Fee</label>
               <div className="flex space-x-2">
                 <select
                   value={formData.entry_fee}
@@ -302,6 +353,7 @@ const CreateTournament = () => {
                       value={formData.entry_fee_amount}
                       onChange={handleEntryFeeAmountChange}
                       placeholder="0.00"
+                      required
                       className="w-full pl-8 pr-4 py-2 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2979FF]"
                     />
                   </div>
@@ -309,6 +361,94 @@ const CreateTournament = () => {
               </div>
             </div>
           </div>
+
+          {/* Payment Information Section - Multiple Methods */}
+          {formData.entry_fee === 'Paid' && (
+            <div className="space-y-4 p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+              <h3 className="text-lg font-medium text-blue-400">Payment Information</h3>
+              <p className="text-sm text-gray-400">
+                Add multiple payment methods for teams to choose from when registering.
+              </p>
+              
+              {/* Add New Payment Method */}
+              <div className="space-y-4">
+                <h4 className="text-md font-medium text-white">Add Payment Method</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Payment Method</label>
+                    <select
+                      value={currentPaymentMethod.method}
+                      onChange={(e) => setCurrentPaymentMethod(prev => ({ ...prev, method: e.target.value }))}
+                      className="w-full px-4 py-2 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2979FF]"
+                    >
+                      <option value="">Select method</option>
+                      {paymentMethodOptions.map(method => (
+                        <option key={method} value={method}>{method}</option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Payment Details</label>
+                    <input
+                      type="text"
+                      value={currentPaymentMethod.details}
+                      onChange={(e) => setCurrentPaymentMethod(prev => ({ ...prev, details: e.target.value }))}
+                      className="w-full px-4 py-2 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2979FF]"
+                      placeholder="@username, email, or payment link"
+                    />
+                  </div>
+
+                  <div className="flex items-end">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={addPaymentMethod}
+                      disabled={!currentPaymentMethod.method || !currentPaymentMethod.details}
+                      className="w-full"
+                    >
+                      Add Method
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Display Added Payment Methods */}
+              {formData.payment_methods.length > 0 && (
+                <div className="space-y-3">
+                  <h4 className="text-md font-medium text-white">Payment Methods ({formData.payment_methods.length})</h4>
+                  {formData.payment_methods.map((method, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 bg-gray-700/50 rounded-lg">
+                      <div>
+                        <span className="font-medium text-white">{method.method}:</span>
+                        <span className="text-gray-300 ml-2">{method.details}</span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        onClick={() => removePaymentMethod(index)}
+                        className="text-red-400 hover:text-red-300"
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Payment Instructions (Optional)</label>
+                <textarea
+                  name="payment_instructions"
+                  value={formData.payment_instructions}
+                  onChange={handleChange}
+                  rows={3}
+                  className="w-full px-4 py-2 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2979FF]"
+                  placeholder="Additional instructions for teams (e.g., 'Include team name in payment note', 'Payment due within 24 hours of registration')"
+                />
+              </div>
+            </div>
+          )}
 
           {/* Dates and Times */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

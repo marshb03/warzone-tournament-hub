@@ -1,4 +1,4 @@
-// src/routes/index.jsx
+// src/routes/index.jsx - Fixed TKR registration routing
 import { Routes, Route } from 'react-router-dom';
 import { ProtectedRoute } from '../components/auth/ProtectedRoute';
 import { SuperAdminRoute, HostRoute } from '../components/auth/RoleBasedRoutes';
@@ -11,7 +11,6 @@ import Tournaments from '../pages/Tournaments';
 import TournamentDetail from '../pages/TournamentDetail';
 import Results from '../pages/Results';
 import TeamGenerator from '../pages/TeamGenerator';
-//import PlayerRankings from '../pages/PlayerRankings';
 import Profile from '../pages/Profile';
 import Login from '../pages/auth/Login';
 import Register from '../pages/auth/Register';
@@ -27,9 +26,14 @@ import AdminDashboard from '../pages/admin/AdminDashboard';
 import CreateTournament from '../pages/admin/CreateTournament';
 import HostApplications from '../pages/admin/HostApplication';
 
-//Host pages
+// Host pages
 import HostDashboard from '../pages/host/HostDashboard';
 import HostTournaments from '../pages/host/HostTournaments';
+
+// TKR Components - Create wrapper pages to handle routing properly
+import TKRTournamentCreate from '../components/tkr/TKRTournamentCreate';
+import TKRTeamRegistrationWrapper from '../pages/TKRTeamRegistrationWrapper';
+import TKRGameSubmissionWrapper from '../pages/TKRGameSubmissionWrapper';
 
 const AppRoutes = () => {
   return (
@@ -44,12 +48,10 @@ const AppRoutes = () => {
       <Route path="/host-application" element={<HostApplication />} />
       <Route path="/team-generator" element={<TeamGenerator />} />
       
-      
       {/* View-only Routes (no auth required) */}
       <Route path="/tournaments" element={<Tournaments />} />
       <Route path="/tournaments/:id" element={<TournamentDetail />} />
       <Route path="/results" element={<Results />} />
-      {/* <Route path="/rankings" element={<PlayerRankings />} />*/}
       <Route path="/rankings" element={<ComingSoon />} />
 
       {/* Protected Routes (require login) */}
@@ -64,6 +66,26 @@ const AppRoutes = () => {
         <HostRoute>
           <CreateTournament />
         </HostRoute>
+      } />
+
+      {/* TKR Specific Routes - Fixed with proper wrappers */}
+      <Route path="/tournaments/new/tkr" element={
+        <HostRoute>
+          <TKRTournamentCreate />
+        </HostRoute>
+      } />
+
+      {/* FIXED: Use wrapper pages that extract tournamentId from URL params */}
+      <Route path="/tournaments/:tournamentId/register-tkr" element={
+        <ProtectedRoute>
+          <TKRTeamRegistrationWrapper />
+        </ProtectedRoute>
+      } />
+
+      <Route path="/tournaments/:tournamentId/submit-games" element={
+        <ProtectedRoute>
+          <TKRGameSubmissionWrapper />
+        </ProtectedRoute>
       } />
       
       {/* Super Admin Only Routes */}

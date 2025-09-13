@@ -13,6 +13,7 @@ from .host_application import ApplicationStatus, HostApplication
 from .activity_log import ActivityLog, ActivityType
 from .system_health import SystemHealth, MetricType
 from .user_social_links import SocialPlatform, UserSocialLink
+from .tkr import TKRTeamSize, PaymentStatus, SubmissionStatus, TKRTournamentConfig, TKRTeamRegistration, TKRGameSubmission, TKRLeaderboard, TKRTemplate
 
 # Export enums directly for easier access
 __all__ = [
@@ -36,5 +37,13 @@ __all__ = [
     'ApplicationStatus',
     'HostApplication', 
     'SocialPlatform', 
-    'UserSocialLink'
+    'UserSocialLink',
+    'TKRTournamentConfig',
+    'TKRTeamRegistration', 
+    'TKRGameSubmission',
+    'TKRLeaderboard',
+    'TKRTemplate',
+    'TKRTeamSize',
+    'PaymentStatus',
+    'SubmissionStatus'
 ]

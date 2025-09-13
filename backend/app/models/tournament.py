@@ -1,5 +1,5 @@
-# app/models/tournament.py
-from sqlalchemy import Column, Integer, String, Enum, ForeignKey, DateTime, JSON
+# app/models/tournament.py - FIXED to match actual database schema
+from sqlalchemy import Column, Integer, String, Enum, ForeignKey, DateTime, JSON, Text
 from sqlalchemy.orm import relationship
 from app.models.base import Base
 import enum
@@ -25,7 +25,7 @@ class Tournament(Base):
     start_date = Column(DateTime, default=datetime.utcnow)
     start_time = Column(String, nullable=True)
     end_date = Column(DateTime, nullable=True)
-    end_time = Column(String, nullable=True)  # Add end_time field
+    end_time = Column(String, nullable=True)
     team_size = Column(Integer, nullable=True)
     max_teams = Column(Integer, nullable=True)
     current_teams = Column(Integer, default=0)
@@ -34,17 +34,28 @@ class Tournament(Base):
     description = Column(String, nullable=True)
     rules = Column(String, nullable=True)
     
-    # New enhancement fields
+    # Enhancement fields
     entry_fee = Column(String, nullable=True)  # "Free" or "$XX.XX" format
     game = Column(String, nullable=True)
     game_mode = Column(String, nullable=True)
     
+    # FIXED: Payment fields - match actual database columns
+    payment_methods = Column(Text, nullable=True)  # JSON string of payment method array
+    payment_details = Column(String, nullable=True)  # Added by migration
+    payment_instructions = Column(Text, nullable=True)  # Additional instructions for teams
+    
     # Existing field for bracket configuration
     bracket_config = Column(JSON, nullable=True)
  
-    # Relationships
+    # Existing relationships
     creator = relationship("User", back_populates="created_tournaments")
     teams = relationship("Team", back_populates="tournament", cascade="all, delete-orphan")
     matches = relationship("Match", back_populates="tournament", cascade="all, delete-orphan")
     leaderboard_entries = relationship("LeaderboardEntry", back_populates="tournament", cascade="all, delete-orphan")
     losers_matches = relationship("LosersMatch", back_populates="tournament", cascade="all, delete-orphan")
+    
+    # TKR relationships
+    tkr_config = relationship("TKRTournamentConfig", back_populates="tournament", uselist=False)
+    tkr_registrations = relationship("TKRTeamRegistration", back_populates="tournament")
+    tkr_submissions = relationship("TKRGameSubmission", back_populates="tournament")
+    tkr_leaderboard = relationship("TKRLeaderboard", back_populates="tournament")

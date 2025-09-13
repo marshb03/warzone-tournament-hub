@@ -1,28 +1,32 @@
-# app/crud/tournament.py
+# app/crud/tournament.py - FIXED: Consistent payment field handling
 from sqlalchemy.orm import Session, joinedload
 from app.models.tournament import Tournament, TournamentFormat, TournamentStatus
 from app.models import Match, Team
 from app.schemas.tournament import TournamentUpdate, TournamentCreate, TournamentBracketConfig
 
-def create_tournament(db: Session, tournament: TournamentCreate, creator_id: int):
+def create_tournament(db: Session, tournament: TournamentCreate, creator_id: int) -> Tournament:
+    """Create a new tournament with payment information"""
     db_tournament = Tournament(
         name=tournament.name,
-        format=TournamentFormat[tournament.format],
+        format=tournament.format,
         start_date=tournament.start_date,
         start_time=tournament.start_time,
         end_date=tournament.end_date,
-        end_time=tournament.end_time,  # Add end_time
+        end_time=tournament.end_time,
         team_size=tournament.team_size,
         max_teams=tournament.max_teams,
         creator_id=creator_id,
-        status=TournamentStatus.PENDING,
-        current_teams=0,
-        bracket_config=tournament.bracket_config.dict() if tournament.bracket_config else None,
-        # New enhancement fields
+        description=tournament.description,
+        rules=tournament.rules,
         entry_fee=tournament.entry_fee,
         game=tournament.game,
-        game_mode=tournament.game_mode
+        game_mode=tournament.game_mode,
+        # FIXED: Payment fields - consistent names
+        payment_methods=tournament.payment_methods,
+        payment_details=tournament.payment_details,
+        payment_instructions=tournament.payment_instructions
     )
+    
     db.add(db_tournament)
     db.commit()
     db.refresh(db_tournament)
@@ -42,12 +46,14 @@ def get_tournaments(db: Session, skip: int = 0, limit: int = 100):
         .all()
 
 def update_tournament(db: Session, tournament_id: int, tournament_update: TournamentUpdate):
+    """Update tournament details including payment information"""
     db_tournament = db.query(Tournament).filter(Tournament.id == tournament_id).first()
     if not db_tournament:
         return None
     
-    # Convert the model to a dict, excluding unset values
     update_data = tournament_update.dict(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(db_tournament, field, value)
     
     # Handle bracket_config separately if it exists
     if 'bracket_config' in update_data and update_data['bracket_config']:
@@ -58,48 +64,68 @@ def update_tournament(db: Session, tournament_id: int, tournament_update: Tourna
         elif hasattr(update_data['bracket_config'], 'dict'):
             update_data['bracket_config'] = update_data['bracket_config'].dict()
     
-    # Update the tournament attributes (including new enhancement fields)
-    for field, value in update_data.items():
-        setattr(db_tournament, field, value)
-    
     db.commit()
     db.refresh(db_tournament)
     return db_tournament
 
 def delete_tournament(db: Session, tournament_id: int):
+    db_tournament = db.query(Tournament).filter(Tournament.id == tournament_id).first()
+    if db_tournament:
+        db.delete(db_tournament)
+        db.commit()
+        return True
+    return False
+
+def get_tournament_creator(db: Session, tournament_id: int):
     tournament = db.query(Tournament).filter(Tournament.id == tournament_id).first()
-    if tournament:
-        db.delete(tournament)
+    return tournament.creator_id if tournament else None
+
+def get_tournaments_by_status(db: Session, status: TournamentStatus, skip: int = 0, limit: int = 100):
+    return db.query(Tournament)\
+        .options(joinedload(Tournament.creator))\
+        .filter(Tournament.status == status)\
+        .offset(skip)\
+        .limit(limit)\
+        .all()
+
+def get_upcoming_tournaments(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(Tournament)\
+        .options(joinedload(Tournament.creator))\
+        .filter(Tournament.status == TournamentStatus.PENDING)\
+        .offset(skip)\
+        .limit(limit)\
+        .all()
+
+def start_tournament(db: Session, tournament_id: int):
+    db_tournament = db.query(Tournament).filter(Tournament.id == tournament_id).first()
+    if db_tournament:
+        db_tournament.status = TournamentStatus.ONGOING
         db.commit()
-    return tournament
+        db.refresh(db_tournament)
+        return db_tournament
+    return None
 
-def update_team_count(db: Session, tournament_id: int) -> int:
-    count = db.query(Team).filter(Team.tournament_id == tournament_id).count()
-    tournament = get_tournament(db, tournament_id=tournament_id)
-    if tournament:
-        tournament.current_teams = count
+def complete_tournament(db: Session, tournament_id: int):
+    db_tournament = db.query(Tournament).filter(Tournament.id == tournament_id).first()
+    if db_tournament:
+        db_tournament.status = TournamentStatus.COMPLETED
         db.commit()
-        db.refresh(tournament)
-    return count
+        db.refresh(db_tournament)
+        return db_tournament
+    return None
 
-def can_add_team(db: Session, tournament_id: int) -> bool:
-    tournament = get_tournament(db, tournament_id=tournament_id)
-    if not tournament:
-        return False
-    return tournament.current_teams < tournament.max_teams
-
-def get_default_bracket_config() -> dict:
-    """Get default bracket configuration."""
-    return TournamentBracketConfig().dict()
-
-def validate_tournament_state(tournament: Tournament) -> bool:
-    """Validate tournament state for operations."""
-    if not tournament:
-        return False
-    if tournament.status == TournamentStatus.COMPLETED:
-        return False
-    if tournament.current_teams < 4:
-        return False
-    if tournament.current_teams > 32:
-        return False
-    return True
+def reset_tournament(db: Session, tournament_id: int):
+    """Reset tournament to PENDING status and clear matches"""
+    db_tournament = db.query(Tournament).filter(Tournament.id == tournament_id).first()
+    if db_tournament:
+        # Clear all matches associated with this tournament
+        db.query(Match).filter(Match.tournament_id == tournament_id).delete()
+        
+        # Reset tournament status
+        db_tournament.status = TournamentStatus.PENDING
+        db_tournament.current_teams = len(db_tournament.teams)
+        
+        db.commit()
+        db.refresh(db_tournament)
+        return db_tournament
+    return None

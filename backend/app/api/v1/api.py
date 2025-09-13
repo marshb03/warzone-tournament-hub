@@ -1,10 +1,10 @@
-# app/api/v1/api.py
+# app/api/v1/api.py - Updated to include TKR routes
 from fastapi import APIRouter
 
 from app.api.v1.endpoints import (
     auth, tournament, team, match, user, leaderboard, 
     player_ranking, team_generator, losers_match, admin, 
-    hosts, host_applications, social_links
+    hosts, host_applications, social_links, tkr  # Add TKR import
 )
 
 api_router = APIRouter()
@@ -23,3 +23,6 @@ api_router.include_router(team_generator.router, prefix="/team-generator", tags=
 api_router.include_router(losers_match.router, prefix="/losers-matches", tags=["losers matches"])
 api_router.include_router(hosts.router, prefix="/hosts", tags=["hosts"])
 api_router.include_router(host_applications.router, prefix="/host-applications", tags=["host-applications"])
+
+# Add TKR router
+api_router.include_router(tkr.router, prefix="/tkr", tags=["tkr"])

@@ -1,6 +1,6 @@
 // src/components/tournament/TournamentCard.jsx
 import React from 'react';
-import { Calendar, Users, Trophy, Clock, ChevronRight, Gamepad2, DollarSign } from 'lucide-react';
+import { Calendar, Users, Trophy, Clock, ChevronRight, Gamepad2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
@@ -100,7 +100,6 @@ const TournamentCard = ({ tournament, isOwner, userRole }) => {
             )}
           </div>
           <div className="flex items-center">
-            <DollarSign className="h-4 w-4 mr-1" />
             <span className={`font-medium ${entry_fee && entry_fee !== 'Free' ? 'text-green-400 font-bold' : ''}`}>
               {entry_fee || 'Free'}
             </span>
